@@ -5,7 +5,7 @@ using System.Text;
 using System.Collections;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
-
+//Poker Training Game - Improve Your Poker Skills with Our Unique Poker Training Software - Personal - Microsoft​ Edge
 namespace PokerMuck
 {
     class FullTilt : PokerClient

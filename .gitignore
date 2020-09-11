@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/PokerMuck/bin/Debug
+/PokerMuck/obj/x86/Debug
+/PokerMuck/obj/x86/Release/.NETFramework,Version=v4.0.AssemblyAttributes.cs
+/.vs/PokerMuck/v16
+/.vs

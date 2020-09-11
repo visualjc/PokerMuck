@@ -362,11 +362,11 @@ namespace PokerMuck
            to this list */
         private void InitializeSupportedPokerClientList()
         {
-            PokerClientsList.Add(new FullTilt());
+            PokerClientsList.Add(new AdvancedPokerTrainer());
             PokerClientsList.Add(new PokerStars());
             PokerClientsList.Add(new PartyPoker());
-            PokerClientsList.Add(new GDPoker());
-            PokerClientsList.Add(new SealsWithClubs());
+            //PokerClientsList.Add(new GDPoker());
+            //PokerClientsList.Add(new SealsWithClubs());
 
             PokerClientsList.SetDefault(new PokerStars());
         }
