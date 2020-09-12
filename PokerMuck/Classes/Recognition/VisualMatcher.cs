@@ -53,9 +53,22 @@ namespace PokerMuck
 
             DirectoryInfo di = new DirectoryInfo(CardMatchesDirectory);
 
+            FileInfo[] files = di.GetFiles();
+            Trace.WriteLine(" --- looking for card files to compare: " + files.Length);
+            if (files.Length < 52)
+            {
+                Trace.WriteLine(" --- forcing copy to happen: " + files.Length);
+                ReplicateCommonCardsForCurrentClient(true);
+            }
+            else
+            {
+                Trace.WriteLine(" --- not forcing copy to happen: " + files.Length);
+            }
+            
             // Copy each file into it’s new directory.
             foreach (FileInfo fi in di.GetFiles())
             {
+                Trace.WriteLine(" --- card file: " + fi.FullName);
                 cardMatchFiles.Add(fi.FullName);
             }
         }
@@ -67,11 +80,17 @@ namespace PokerMuck
 
         /* We make copies of the common set of cards so that we do not delete the originals 
          * Every poker client and every theme of a poker client needs a different set */
-        private void ReplicateCommonCardsForCurrentClient()
+        private void ReplicateCommonCardsForCurrentClient(bool force = false)
         {
-            if (!Directory.Exists(CardMatchesDirectory))
+            Trace.WriteLine(" --- ReplicateCommonCardsForCurrentClient: ");
+            if (force || !Directory.Exists(CardMatchesDirectory))
             {
+                Trace.WriteLine(" --- ReplicateCommonCardsForCurrentClient: DID the copy");
                 CopyDirectoryAll(new DirectoryInfo(@".\Resources\CardMatches\Common\"), new DirectoryInfo(CardMatchesDirectory));
+            }
+            else
+            {
+                Trace.WriteLine(" --- ReplicateCommonCardsForCurrentClient: DID NOT copy");
             }
         }
 
@@ -114,6 +133,7 @@ namespace PokerMuck
 
             foreach (Bitmap image in images)
             {
+                Trace.WriteLine(" ----- CARD matching......");
                 Card card = MatchCard(image);
                 if (card != null)
                 {
@@ -144,6 +164,8 @@ namespace PokerMuck
             double greenDiff = Math.Abs(stats1.Green.Mean - stats2.Green.Mean);
             double redDiff = Math.Abs(stats1.Red.Mean - stats2.Red.Mean);
 
+            Trace.WriteLine("\t --- Rd: " + redDiff + " Gd: " + greenDiff + " Bd: " + blueDiff);
+            
             return ((redDiff + blueDiff + greenDiff) / 3.0d);
         }
 
@@ -159,10 +181,12 @@ namespace PokerMuck
 
         /* It returns null if there are no good matches 
          * If training mode is enabled, a window might ask the user to aid the algorithm find the best match */
-        public Card MatchCard(Bitmap image)
+        public Card MatchCard(Bitmap image, string player_card = null)
         {
             if (image == null) return null;
 
+            if (player_card == null) player_card = "unk";
+            
             double minDifference = Double.MaxValue;
             double maxSimilarity = 0.0d;
             String bestMatchFilename = "";
@@ -183,17 +207,25 @@ namespace PokerMuck
                 candidateImage = ScaleIfBiggerThan(image, candidateImage);
 
 
+                String name = cardMatchFile.Substring(cardMatchFile.Length - 10);
+                
+                Trace.WriteLine(" --- STARTING COMP: " + name + " for: " + player_card);
                 double difference = HistogramBitmapDifference(image, candidateImage);
                 double similarity = TemplateMatchingSimilarity(image, candidateImage);
 
+                Trace.WriteLine("--- " + player_card + " : " + name + " difference: (" + difference + ") similarity: (" + similarity + ")");
+
+
                 if (difference < minDifference)
                 {
+                    Trace.WriteLine(" ---- setting the minDifference to: " + difference);
                     minDifference = difference;
                     bestMatchFilename = cardMatchFile;
                 }
 
                 if (similarity > maxSimilarity)
                 {
+                    Trace.WriteLine(" ---- setting the maxSimilarity to: " + similarity);
                     maxSimilarity = similarity;
                 }
 
@@ -208,7 +240,11 @@ namespace PokerMuck
                      * we can pretty safely ignore them, since
                      * they are likely to be perfectly matched with another target (and this block would have not been executed) */
 
-                    if (!sizesMatch) possibleMatches.Add(cardMatchFile, similarity);
+                    if (!sizesMatch)
+                    {
+                        Trace.WriteLine(" --- Adding " + name + " to possible matches");
+                        possibleMatches.Add(cardMatchFile, similarity);
+                    }
                 }
 
                 candidateImage.Dispose();
