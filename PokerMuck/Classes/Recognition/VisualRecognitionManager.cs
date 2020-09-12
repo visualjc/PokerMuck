@@ -32,7 +32,7 @@ namespace PokerMuck
             this.colorMap = ColorMap.Create(table.Game);
             this.recognitionMap = new VisualRecognitionMap(table.VisualRecognitionMapLocation, colorMap);
             this.matcher = new VisualMatcher(Globals.UserSettings.CurrentPokerClient);
-            this.tableWindow = new Window(table.WindowTitle);
+            this.tableWindow = new Window(table.WindowHandle);
 
             this.timedScreenshotTaker = new TimedScreenshotTaker(REFRESH_TIME, tableWindow);
             this.timedScreenshotTaker.ScreenshotTaken += new TimedScreenshotTaker.ScreenshotTakenHandler(timedScreenshotTaker_ScreenshotTaken);
@@ -69,21 +69,29 @@ namespace PokerMuck
                 Size newSize = winSize - difference;
 
                 tableWindow.Resize(newSize, true);
-
+                Trace.WriteLine(" --- CurrentHeroSeat: " + table.CurrentHeroSeat);
+                Trace.WriteLine(" --- resizing window try again later");
                 return; // At next iteration this code should not be executed because sizes will be the same, unless the player resizes the window
             }
 
+            int heroSeat = table.CurrentHeroSeat == 0 ? 1 : table.CurrentHeroSeat;
             // If we don't know where the player is seated, we don't need to process any further
-            if (table.CurrentHeroSeat == 0) return;
+            if (table.CurrentHeroSeat == 0)
+            {
+                Trace.WriteLine(" --- could not find CurrentHeroSeat???");
+            //    return;
+            }
 
             /* Try to match player cards */
             List<Bitmap> playerCardImages = new List<Bitmap>();
-            ArrayList playerCardsActions = colorMap.GetPlayerCardsActions(table.CurrentHeroSeat);
+            ArrayList playerCardsActions = colorMap.GetPlayerCardsActions(heroSeat);
 
             foreach(String action in playerCardsActions){
+                Trace.WriteLine(" --- PlayerCardsActions: " + action);
                 Rectangle actionRect = recognitionMap.GetRectangleFor(action);
                 if (!actionRect.Equals(Rectangle.Empty))
                 {
+                    Trace.WriteLine(" --- Found Rectangle for:: " + action);
                     playerCardImages.Add(ScreenshotTaker.Slice(screenshot, actionRect));
                 }
                 else
@@ -92,46 +100,58 @@ namespace PokerMuck
                 }
             }
 
-            CardList playerCards = matcher.MatchCards(playerCardImages, false);
-            if (playerCards != null)
-            {
-                Trace.WriteLine("Matched player cards! " + playerCards.ToString());
-                handler.PlayerHandRecognized(playerCards);
-            }
+            Trace.WriteLine("Matching player cards! ");
+            Trace.WriteLine(" -- checking for card: " + playerCardsActions[0]);
+            Card card1 = matcher.MatchCard(playerCardImages[0]);
+            Card card2 = matcher.MatchCard(playerCardImages[1]);
+            CardList playerCards = new CardList(2);
+            playerCards.AddCard(card1);
+            playerCards.AddCard(card2);
+            
+            // CardList playerCards = matcher.MatchCards(playerCardImages, false);
+            // if (playerCards != null)
+            // {
+            Trace.WriteLine("Matched player cards! " + playerCards.ToString());
+            handler.PlayerHandRecognized(playerCards);
+            // }
+            // else
+            // {
+            //     Trace.WriteLine(" --- Did not find any matching player cards ");
+            // }
 
             // Dispose
             foreach (Bitmap image in playerCardImages) if (image != null) image.Dispose();
 
             /* If community cards are supported, try to match them */
-            if (colorMap.SupportsCommunityCards)
-            {
-                List<Bitmap> communityCardImages = new List<Bitmap>();
-                ArrayList communityCardsActions = colorMap.GetCommunityCardsActions();
-
-                foreach (String action in communityCardsActions)
-                {
-                    Rectangle actionRect = recognitionMap.GetRectangleFor(action);
-                    if (!actionRect.Equals(Rectangle.Empty))
-                    {
-                        communityCardImages.Add(ScreenshotTaker.Slice(screenshot, actionRect));
-                    }
-                    else
-                    {
-                        Trace.WriteLine("Warning: could not find a rectangle for action " + action);
-                    }
-                }
-
-                // We try to identify as many cards as possible
-                CardList communityCards = matcher.MatchCards(communityCardImages, true);
-                if (communityCards != null && communityCards.Count > 0)
-                {
-                    Trace.WriteLine("Matched board cards! " + communityCards.ToString());
-                    handler.BoardRecognized(communityCards);
-                }
-
-                // Dispose
-                foreach (Bitmap image in communityCardImages) if (image != null) image.Dispose();
-            }
+            // if (colorMap.SupportsCommunityCards)
+            // {
+            //     List<Bitmap> communityCardImages = new List<Bitmap>();
+            //     ArrayList communityCardsActions = colorMap.GetCommunityCardsActions();
+            //
+            //     foreach (String action in communityCardsActions)
+            //     {
+            //         Rectangle actionRect = recognitionMap.GetRectangleFor(action);
+            //         if (!actionRect.Equals(Rectangle.Empty))
+            //         {
+            //             communityCardImages.Add(ScreenshotTaker.Slice(screenshot, actionRect));
+            //         }
+            //         else
+            //         {
+            //             Trace.WriteLine("Warning: could not find a rectangle for action " + action);
+            //         }
+            //     }
+            //
+            //     // We try to identify as many cards as possible
+            //     CardList communityCards = matcher.MatchCards(communityCardImages, false);
+            //     if (communityCards != null && communityCards.Count > 0)
+            //     {
+            //         Trace.WriteLine("Matched board cards! " + communityCards.ToString());
+            //         handler.BoardRecognized(communityCards);
+            //     }
+            //
+            //     // Dispose
+            //     foreach (Bitmap image in communityCardImages) if (image != null) image.Dispose();
+            // }
 
             // Dispose screenshot
             if (screenshot != null) screenshot.Dispose();

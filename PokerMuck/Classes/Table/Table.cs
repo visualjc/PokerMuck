@@ -59,6 +59,15 @@ namespace PokerMuck
         private TableDisplayWindow displayWindow;
         public TableDisplayWindow DisplayWindow { get { return displayWindow; } }
 
+        public IntPtr WindowHandle
+        {
+            get
+            {
+                return window.handle;
+            }
+        }
+
+
         /* The playing window's title currently associated with this table */
         public String WindowTitle
         {
@@ -453,6 +462,7 @@ namespace PokerMuck
             bool foundSeat = false;
             foreach (Player p in PlayerList)
             {
+                Trace.WriteLine(" --- Player: " + p.Name);
                 if (p.Name == heroName)
                 {
                     currentHeroSeat = p.SeatNumber;

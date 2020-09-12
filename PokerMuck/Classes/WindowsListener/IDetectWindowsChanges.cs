@@ -8,7 +8,7 @@ namespace PokerMuck
 {
     interface IDetectWindowsChanges
     {
-        void NewForegroundWindow(string windowTitle, Rectangle windowRect);
+        void NewForegroundWindow(string windowTitle, Rectangle windowRect, IntPtr windowHandle);
         void ForegroundWindowPositionChanged(string windowTitle, Rectangle windowRect);
         void WindowClosed(string windowTitle);
         void WindowMinimized(string windowTitle);

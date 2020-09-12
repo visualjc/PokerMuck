@@ -60,11 +60,11 @@ namespace PokerMuck
         [DllImport("user32.dll", EntryPoint = "IsWindowVisible", SetLastError = true)]
         public static extern bool IsWindowVisible(IntPtr hWnd);
         
-        private IntPtr handle;
+        public IntPtr handle;
         public IntPtr Handle { get { return (IntPtr)handle; } }
 
         // Keep track of the latest valid window title
-        private String latestValidWindowTitle = String.Empty;
+        public String latestValidWindowTitle = String.Empty;
 
         /* Returns the most current, valid window title
          * An empty title is not a valid window title */
@@ -239,7 +239,7 @@ namespace PokerMuck
             }
             else
             {
-                Trace.WriteLine("I couldn't figure out position and size of window handle " + handle.ToString());
+                Trace.WriteLine(" --- I couldn't figure out position and size of window handle " + handle.ToString());
             }
 
             return windowRect;

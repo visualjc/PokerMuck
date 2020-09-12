@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Drawing;
 using System.Threading;
-using System.Drawing;
 
 namespace PokerMuck
 {

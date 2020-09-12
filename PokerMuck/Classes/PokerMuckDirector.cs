@@ -241,7 +241,7 @@ namespace PokerMuck
         /* A new file was created! This might belong to one of the game windows */
         public void NewFileWasCreated(String filename)
         {
-            CreateTableFromPokerWindow(windowsListener.CurrentForegroundWindowTitle);
+            CreateTableFromPokerWindow(windowsListener.CurrentForegroundWindowTitle, new IntPtr(0));
         }
 
         /* Windows Listener event handler, detects when a new windows becomes the active window */
@@ -254,7 +254,7 @@ namespace PokerMuck
             CheckForWindowsOverlaysOnConnectedWindows(windowTitle, windowRect);
         }
 
-        private void CreateTableFromPokerWindow(string windowTitle, IntPtr windowHndl)
+        private void CreateTableFromPokerWindow(string windowTitle, IntPtr windowHandle)
         {
             /* We ignore any event that is caused by a window titled "HudWindow"
              * because the user might be simply interacting with our hud.
@@ -297,12 +297,24 @@ namespace PokerMuck
                         if (table == null)
                         {
                             // First time we see it, we need to create a table for this request
-                            Table newTable = new Table(filePath, new Window(windowHndl), pokerClient, playerDatabase);
+                            Trace.WriteLine("--- we have a window, do we have a windowHandle? " + windowHandle.ToString());
+                            Window window = null;
+                            if (IntPtr.Zero == windowHandle) {
+                                Trace.WriteLine("--- creating Window From Title: " + windowTitle);
+                                window = new Window(windowTitle);
+                            }
+                            else
+                            {
+                                Trace.WriteLine("--- creating Window From Handle: " + windowHandle.ToString());
+                                window = new Window(windowHandle);
+                                window.latestValidWindowTitle = windowTitle;
+                            }
+                            Table newTable = new Table(filePath, window, pokerClient, playerDatabase);
 
                             // and add it to our list
                             tables.Add(newTable);
 
-                            Trace.WriteLine("Created new table: " + newTable.WindowTitle + " on " + newTable.HandHistoryFilePath);
+                            Trace.WriteLine("Created new table: " + newTable.WindowTitle + "(" + windowHandle.ToString() + ")"  + " on " + newTable.HandHistoryFilePath);
 
                             OnDisplayStatus("Parsing for the first time... please wait.");
 
@@ -378,7 +390,7 @@ namespace PokerMuck
         {
             if (windowsListener != null)
             {
-                Window w = new Window(windowsListener.CurrentForegroundWindowTitle);
+                Window w = new Window(windowsListener.CurrentForegroundWindowHandle);
 
                 ScreenshotTaker st = new ScreenshotTaker();
                 Bitmap screenshot = st.Take(w, clientOnly, ScreenshotTaker.Mode.PrintScreen);

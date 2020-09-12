@@ -27,6 +27,9 @@ namespace PokerMuck
         public int ListenInterval { get; set; }
 
         /* Current foreground window title */
+        public IntPtr CurrentForegroundWindowHandle { get; set; }
+
+        /* Current foreground window title */
         public String CurrentForegroundWindowTitle { get; set; }
 
         /* Current foreground window rectangle */
@@ -113,7 +116,7 @@ namespace PokerMuck
                 // Update current foreground window title and window rect
                 CurrentForegroundWindowTitle = Window.GetWindowTitleFromHandle(handle);
                 CurrentForegroundWindowRect = Window.GetWindowRectFromHandle(handle);
-
+                CurrentForegroundWindowHandle = handle;
 
                 // Title Different?
                 if (CurrentForegroundWindowTitle != String.Empty && CurrentForegroundWindowTitle != previousForegroundWindowTitle)
