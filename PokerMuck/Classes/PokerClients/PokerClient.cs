@@ -191,7 +191,9 @@ namespace PokerMuck
             
             try
             {
-                String[] files = System.IO.Directory.GetFiles(Application.StartupPath + @"\\Resources\\ColorMaps\\" + this.Name);
+                string path = Application.StartupPath + @"\\Resources\\ColorMaps\\" + this.Name;
+                Trace.WriteLine("--- Path: " + path);
+                String[] files = System.IO.Directory.GetFiles(path);
 
                 Regex themeName = new Regex(@"[\w]+_[\d]+-max_(?<theme>[\w]+)\.bmp");
 
@@ -199,22 +201,23 @@ namespace PokerMuck
                 {
                     Match m = themeName.Match(file);
                     if (m.Success){
+                        Trace.WriteLine("--- Found color map(s) for: " + this.Name);
                         String theme = m.Groups["theme"].Value;
 
-                        Trace.WriteLine("Found valid color map for " + this.Name + ": " + theme);
+                        Trace.WriteLine("--- Found valid color map for " + this.Name + ": " + theme);
                         if (!supportedVisualRecognitionThemes.Contains(theme))
                         {
                             supportedVisualRecognitionThemes.Add(theme);
                         }
                     }else{
-                        Trace.WriteLine("Detected invalid card map filename format: " + file + ", skipping...");
+                        Trace.WriteLine("--- Detected invalid card map filename format: " + file + ", skipping...");
                     }
 
                 }
             }
             catch (DirectoryNotFoundException)
             {
-                Trace.WriteLine("CardMaps directory for " + this.Name + " not found, skipping...");
+                Trace.WriteLine("--- CardMaps directory for " + this.Name + " not found, skipping...");
             }
         }
 
@@ -224,7 +227,7 @@ namespace PokerMuck
         }
 
         public Regex GetRegex(String key){
-            Trace.Assert(regex.ContainsKey(key),String.Format("The derived PokerClient class does not include the regex key: " + key));
+            Trace.Assert(regex.ContainsKey(key),String.Format("--- The derived PokerClient class does not include the regex key: " + key));
             
             string pattern = (String)regex[key];
             return new Regex(pattern, regexOptions);

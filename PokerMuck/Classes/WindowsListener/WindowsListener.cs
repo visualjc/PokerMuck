@@ -119,7 +119,7 @@ namespace PokerMuck
                 if (CurrentForegroundWindowTitle != String.Empty && CurrentForegroundWindowTitle != previousForegroundWindowTitle)
                 {
                     // Notify handler
-                    handler.NewForegroundWindow(CurrentForegroundWindowTitle, CurrentForegroundWindowRect);
+                    handler.NewForegroundWindow(CurrentForegroundWindowTitle, CurrentForegroundWindowRect, handle);
 
                     // Check if the window actually exists
                     currentWindowExists = Window.Exists(CurrentForegroundWindowTitle);

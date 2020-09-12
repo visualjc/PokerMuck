@@ -28,8 +28,9 @@ namespace PokerMuck
                   ex. California X - €0.01/€0.02 EUR - No Limit Hold'em [AAMS ID: M2BCE3000C59C5PF] */
                 regex.Add("game_window_title_to_recognize_tournament_game_id", @"]? - (?<tournamentId>[^ ]+ [0-9]+) [^$]+$");
                 regex.Add("game_window_title_to_recognize_play_money_game_description", @"(?<gameDescription>[^-]+)-[^-]+ Play Money");
-                regex.Add("game_window_title_to_recognize_cash_game_description", @"(?<gameDescription>.+) - .[\d\.]+\/.[\d\.]+ [\w]{3} - ");
-
+                //regex.Add("game_window_title_to_recognize_cash_game_description", @"(?<gameDescription>.+) - .[\d\.]+\/.[\d\.]+ [\w]{3} - ");
+                //https://www.advancedpokertraining.com/poker/game_popup.php?session_replay_id=3047262&replay_game_level=16&advisor_id=-1&html5=1&retry=1 - Personal - Microsoft? Edge
+                regex.Add("game_window_title_to_recognize_cash_game_description", @"[\?&](?<name>[^&=]+)=(?<value>[^&=]+)");
 
                 /* Recognize the Hand History game phases */
                 regex.Add("hand_history_begin_preflop_phase_token", @"\*\*\* HOLE CARDS \*\*\*");
@@ -116,7 +117,7 @@ namespace PokerMuck
 
                 /* Hand history file format. Example: HH20111216 T123456789 ... .txt */
                 config.Add("hand_history_tournament_filename_format", "HH[0-9]+ {0}{1}");
-                config.Add("hand_history_play_and_real_money_filename_format", "HH[0-9]+ {0}");
+                config.Add("hand_history_play_and_real_money_filename_format", "{0}");
 
                 /* Game description (as shown in the hand history) */
                 regex.Add("game_description_holdem", "(Hold'em No Limit|Hold'em Limit)");
@@ -147,7 +148,11 @@ namespace PokerMuck
         /**
          * This function matches an open window title with patterns to recognize which hand history
          * the current window refers to (if it is even a poker game window). It will return an empty
-         * string if it cannot match any pattern */
+         * string if it cannot match any pattern 
+         
+        With ADT, we can:
+        - 1, parse the title to pull out the session_replay_id and find the session test
+         */
         public override String GetHandHistoryFilenameRegexPatternFromWindowTitle(String windowTitle)
         {
             // TODO REMOVE IN PRODUCTION
@@ -157,9 +162,10 @@ namespace PokerMuck
             if (windowTitle == "test4.txt - Notepad") return "test4.txt";
             if (windowTitle == "test5.txt - Notepad") return "test5.txt";
 
-
+            //https://www.advancedpokertraining.com/poker/game_popup.php?session_replay_id=3047262&replay_game_level=16&advisor_id=-1&html5=1&retry=1 - Personal - Microsoft? Edge
             /* Tricky, title format is significantly different for tournaments and play money on PokerStars.it
              * so we need to make two checks */
+            //TODO: need to get this to work some day
             Regex regex = GetRegex("game_window_title_to_recognize_tournament_game_id");
             Match match = regex.Match(windowTitle);
             if (match.Success)
@@ -188,13 +194,13 @@ namespace PokerMuck
                 }
                 else
                 {
-
+                    // okay - lets look at this
                     // No luck again, try with cash games
                     regex = GetRegex("game_window_title_to_recognize_cash_game_description");
                     match = regex.Match(windowTitle);
                     if (match.Success)
                     {
-                        string gameDescription = match.Groups["gameDescription"].Value;
+                        string gameDescription = match.Groups["value"].Value;
 
                         // We matched a real money game window, need to convert the description into a filename friendly format
                         return String.Format(GetConfigString("hand_history_play_and_real_money_filename_format"), gameDescription);

@@ -245,16 +245,16 @@ namespace PokerMuck
         }
 
         /* Windows Listener event handler, detects when a new windows becomes the active window */
-        public void NewForegroundWindow(string windowTitle, Rectangle windowRect)
+        public void NewForegroundWindow(string windowTitle, Rectangle windowRect, IntPtr windowHndl)
         {
             if (windowTitle == "HudWindow" || windowTitle == "TableDisplayWindow") return; // Ignore hud and table display windows
 
-            CreateTableFromPokerWindow(windowTitle);
+            CreateTableFromPokerWindow(windowTitle, windowHndl);
             
             CheckForWindowsOverlaysOnConnectedWindows(windowTitle, windowRect);
         }
 
-        private void CreateTableFromPokerWindow(string windowTitle)
+        private void CreateTableFromPokerWindow(string windowTitle, IntPtr windowHndl)
         {
             /* We ignore any event that is caused by a window titled "HudWindow"
              * because the user might be simply interacting with our hud.
@@ -297,7 +297,7 @@ namespace PokerMuck
                         if (table == null)
                         {
                             // First time we see it, we need to create a table for this request
-                            Table newTable = new Table(filePath, new Window(windowTitle), pokerClient, playerDatabase);
+                            Table newTable = new Table(filePath, new Window(windowHndl), pokerClient, playerDatabase);
 
                             // and add it to our list
                             tables.Add(newTable);
