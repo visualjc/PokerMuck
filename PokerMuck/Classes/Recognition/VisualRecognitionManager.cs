@@ -12,7 +12,7 @@ namespace PokerMuck
     class VisualRecognitionManager
     {
         /* How often do we pick a new screenshot and elaborate the images? */
-        const int REFRESH_TIME = 4000;
+        const int REFRESH_TIME = 2000;
 
         private Table table;
         private IVisualRecognitionManagerHandler handler;
