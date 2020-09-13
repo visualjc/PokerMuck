@@ -526,7 +526,9 @@ namespace PokerMuck
         {
             Globals.Director.RunFromGUIThread((Action)delegate()
             {
-                if (DisplayWindow != null) DisplayWindow.DisplayPlayerHand(playerCards);
+                Trace.WriteLine("\n\t ~~~ PlayerHandRecognized " + playerCards.ToString());
+                if (DisplayWindow != null) 
+                    DisplayWindow.DisplayPlayerHand(playerCards);
             }, true);
             
         }
@@ -535,6 +537,7 @@ namespace PokerMuck
         {
             Globals.Director.RunFromGUIThread((Action)delegate()
             {
+                Trace.WriteLine("\n\t ~~~ BoardRecognized " + board.ToString());
                 if (Game == PokerGame.Holdem && DisplayWindow != null){
                     ((HoldemTableDisplayWindow)DisplayWindow).DisplayBoard(board);
                 }                

@@ -102,56 +102,75 @@ namespace PokerMuck
 
             Trace.WriteLine("Matching player cards! ");
             Trace.WriteLine(" -- checking for card: " + playerCardsActions[0]);
-            Card card1 = matcher.MatchCard(playerCardImages[0]);
-            Card card2 = matcher.MatchCard(playerCardImages[1]);
-            CardList playerCards = new CardList(2);
-            playerCards.AddCard(card1);
-            playerCards.AddCard(card2);
-            
-            // CardList playerCards = matcher.MatchCards(playerCardImages, false);
-            // if (playerCards != null)
-            // {
-            Trace.WriteLine("Matched player cards! " + playerCards.ToString());
-            handler.PlayerHandRecognized(playerCards);
-            // }
-            // else
-            // {
-            //     Trace.WriteLine(" --- Did not find any matching player cards ");
-            // }
+            Card card1 = matcher.MatchCard(playerCardImages[0], playerCardsActions[0].ToString());
+            Card card2 = matcher.MatchCard(playerCardImages[1], playerCardsActions[1].ToString());
 
+            bool hasCard1 = null != card1;
+            bool hasCard2 = null != card2;
+            
+            Trace.WriteLine("--- hasCard1: " + hasCard1 + " hasCard2: " + hasCard2);
+
+            if (hasCard1 && hasCard2)
+            {
+                Trace.WriteLine("---- HAS CARDSSSSS!!! YEA!!!!");
+                CardList playerCards = new CardList(2);
+                playerCards.AddCard(card1);
+                playerCards.AddCard(card2);
+            
+                //CardList playerCards = matcher.MatchCards(playerCardImages, false);
+                // if (playerCards != null)
+                // {
+                    Trace.WriteLine("Matched player cards! " + playerCards.ToString());
+                    handler.PlayerHandRecognized(playerCards);
+                // }
+                // else
+                // {
+                //     Trace.WriteLine(" --- Did not find any matching player cards ");
+                // }
+    
+            }
+            else
+            {
+                Trace.WriteLine(" --- Did not find any matching player cards ");
+            }
+            
             // Dispose
             foreach (Bitmap image in playerCardImages) if (image != null) image.Dispose();
 
             /* If community cards are supported, try to match them */
-            // if (colorMap.SupportsCommunityCards)
-            // {
-            //     List<Bitmap> communityCardImages = new List<Bitmap>();
-            //     ArrayList communityCardsActions = colorMap.GetCommunityCardsActions();
-            //
-            //     foreach (String action in communityCardsActions)
-            //     {
-            //         Rectangle actionRect = recognitionMap.GetRectangleFor(action);
-            //         if (!actionRect.Equals(Rectangle.Empty))
-            //         {
-            //             communityCardImages.Add(ScreenshotTaker.Slice(screenshot, actionRect));
-            //         }
-            //         else
-            //         {
-            //             Trace.WriteLine("Warning: could not find a rectangle for action " + action);
-            //         }
-            //     }
-            //
-            //     // We try to identify as many cards as possible
-            //     CardList communityCards = matcher.MatchCards(communityCardImages, false);
-            //     if (communityCards != null && communityCards.Count > 0)
-            //     {
-            //         Trace.WriteLine("Matched board cards! " + communityCards.ToString());
-            //         handler.BoardRecognized(communityCards);
-            //     }
-            //
-            //     // Dispose
-            //     foreach (Bitmap image in communityCardImages) if (image != null) image.Dispose();
-            // }
+            if (colorMap.SupportsCommunityCards)
+            {
+                List<Bitmap> communityCardImages = new List<Bitmap>();
+                ArrayList communityCardsActions = colorMap.GetCommunityCardsActions();
+            
+                foreach (String action in communityCardsActions)
+                {
+                    Rectangle actionRect = recognitionMap.GetRectangleFor(action);
+                    if (!actionRect.Equals(Rectangle.Empty))
+                    {
+                        communityCardImages.Add(ScreenshotTaker.Slice(screenshot, actionRect));
+                    }
+                    else
+                    {
+                        Trace.WriteLine("Warning: could not find a rectangle for action " + action);
+                    }
+                }
+            
+                // We try to identify as many cards as possible
+                CardList communityCards = matcher.MatchCards(communityCardImages, true);
+                if (communityCards != null && communityCards.Count > 0)
+                {
+                    Trace.WriteLine("~~~ Matched board cards! " + communityCards.ToString());
+                    handler.BoardRecognized(communityCards);
+                }
+                else
+                {
+                    Trace.WriteLine("~~~ Warning: could not find a commnity cards ");
+                }
+            
+                // Dispose
+                foreach (Bitmap image in communityCardImages) if (image != null) image.Dispose();
+            }
 
             // Dispose screenshot
             if (screenshot != null) screenshot.Dispose();

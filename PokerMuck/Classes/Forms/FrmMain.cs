@@ -142,14 +142,50 @@ namespace PokerMuck
             tabControl.SelectedIndex = tabControl.TabCount - 1;
         }
 
+        void Director_WaitToInvalidateAfterUI(object result)
+        {
+            Thread.Sleep(500);
+            IAsyncResult asyncResult = (IAsyncResult) result;
+            asyncResult.AsyncWaitHandle.WaitOne();
+            Trace.WriteLine("\n\t ~~~~ WaitONe finished");
+            Director_InvalidateAfterUI(asyncResult);
+        }
+        void Director_InvalidateAfterUI(IAsyncResult result)
+        {
+            if (result.IsCompleted || result.CompletedSynchronously)
+            {
+                //Trace.WriteLine("\n\t ~~~ result complete");
+                this.Invoke((Action)delegate()
+                {
+                    Invalidate();
+                });
+            }
+            else
+            {
+                //Trace.WriteLine("\n\t ~~~ result not complete");
+                ParameterizedThreadStart threadDelegate =
+                    new ParameterizedThreadStart(this.Director_WaitToInvalidateAfterUI);
+                Thread newThread = new Thread(threadDelegate);
+                newThread.Start(result);
+            }
+        }
+        
         void Director_RunGUIRoutine(Action d, Boolean asynchronous)
         {
             if (this != null)
             {
                 try
                 {
-                    if (asynchronous) this.BeginInvoke(d);
-                    else this.Invoke(d);
+                    if (asynchronous)
+                    {
+                        IAsyncResult result = this.BeginInvoke(d);
+                        Director_InvalidateAfterUI(result);
+                    }
+                    else
+                    {
+                        this.Invoke(d);
+                        this.Invalidate();
+                    }
                 }
                 catch (Exception e)
                 {
