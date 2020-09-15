@@ -125,16 +125,18 @@ namespace PokerMuck
         /* Tries to match a set of bitmaps into a card list. 
          * @param allowPartialMatch If any card fails to match, the operation is aborted and the results obtained so far are returned
          *  (but they might be incomplete). If this parameter is set to false, null is returned on failure. */
-        public CardList MatchCards(List<Bitmap> images, bool allowPartialMatch)
+        public CardList MatchCards(List<Bitmap> images, bool allowPartialMatch, ArrayList actionMap)
         {
             if (images.Count == 0) return null;
 
             CardList result = new CardList();
 
+            int i = 0;
             foreach (Bitmap image in images)
             {
-                Globals.Director.WriteDebug(" ----- CARD matching......");
-                Card card = MatchCard(image);
+                Globals.Director.WriteDebug(" --- action: " + actionMap[i].ToString());
+                Card card = MatchCard(image, actionMap[i].ToString());
+                ++i;
                 if (card != null)
                 {
                     result.AddCard(card);
@@ -207,7 +209,7 @@ namespace PokerMuck
                 candidateImage = ScaleIfBiggerThan(image, candidateImage);
 
 
-                String name = cardMatchFile.Substring(cardMatchFile.Length - 10);
+                String name = cardMatchFile/*.Substring(cardMatchFile.Length - 25)*/ + "\n";
                 
                 Globals.Director.WriteDebug(" --- STARTING COMP: " + name + " for: " + player_card);
                 double difference = HistogramBitmapDifference(image, candidateImage);
@@ -240,11 +242,11 @@ namespace PokerMuck
                      * we can pretty safely ignore them, since
                      * they are likely to be perfectly matched with another target (and this block would have not been executed) */
 
-                    if (!sizesMatch)
-                    {
-                        Globals.Director.WriteDebug(" --- Adding " + name + " to possible matches");
+                    // if (!sizesMatch)
+                    // {
+                        Globals.Director.WriteDebug("\n\n\n --- Adding " + name + " to possible matches");
                         possibleMatches.Add(cardMatchFile, similarity);
-                    }
+                    // }
                 }
 
                 candidateImage.Dispose();
@@ -259,7 +261,7 @@ namespace PokerMuck
             {
                 if (minDifference > PERFECT_MATCH_HISTOGRAM_THRESHOLD && maxSimilarity > POSSIBLE_MATCH_TEMPLATE_THRESHOLD)
                 {
-                    Globals.Director.WriteDebug("Min difference too high (" + minDifference + ") and max similarity above threshold, asking user to confirm our guesses");
+                    Globals.Director.WriteDebug("Min difference too high (" + minDifference + ") and max similarity (" + maxSimilarity + ") above threshold, asking user to confirm our guesses");
 
                     Card userCard = null;
                     Globals.Director.RunFromGUIThread((Action)delegate()
@@ -275,6 +277,7 @@ namespace PokerMuck
                 }
             }
 
+            Globals.Director.WriteDebug("\n\t bestMatchFile: " + bestMatchFilename + "\n\t");
             // If the user has selected a card, matchedCard is an object and this is skipped
             if (minDifference < PERFECT_MATCH_HISTOGRAM_THRESHOLD && matchedCard == null && bestMatchFilename != "") matchedCard = Card.CreateFromPath(bestMatchFilename);
 
@@ -311,7 +314,7 @@ namespace PokerMuck
             }));
 
             // Create cards from filenames
-            const int MAX_CARDS_TO_DISPLAY = 7;
+            const int MAX_CARDS_TO_DISPLAY = 15;
             int i = 0;
             foreach (String filename in orderedFilenames)
             {

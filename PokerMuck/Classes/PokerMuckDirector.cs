@@ -428,7 +428,7 @@ namespace PokerMuck
             debugStrBld.Clear();
             debugStrBld.Append(now.ToShortTimeString());
             debugStrBld.Append("\t ~~~");
-            debugStrBld.AppendFormat("[{0:g}] - c:{1} - m:{2} - {3} : {4}",
+            debugStrBld.AppendFormat("[c:{1} {0:g}] m:{2} - f:{3} : l:{4}",
                 debugMsg,
                 className,
                 memberName,

@@ -59,7 +59,7 @@ namespace PokerMuck
              * we resize the window and retake the screenshot */
             if (!screenshot.Size.Equals(recognitionMap.OriginalMapSize))
             {
-                Trace.WriteLine(String.Format("Screenshot size ({0}x{1}) differs from our map image ({2}x{3}), resizing window...", 
+                Globals.Director.WriteDebug(String.Format("Screenshot size ({0}x{1}) differs from our map image ({2}x{3}), resizing window...", 
                     screenshot.Size.Width, screenshot.Size.Height, recognitionMap.OriginalMapSize.Width, recognitionMap.OriginalMapSize.Height));
 
                 Size winSize = tableWindow.Size;
@@ -70,8 +70,8 @@ namespace PokerMuck
                 Size newSize = winSize - difference;
 
                 tableWindow.Resize(newSize, true);
-                Trace.WriteLine(" --- CurrentHeroSeat: " + table.CurrentHeroSeat);
-                Trace.WriteLine(" --- resizing window try again later");
+                Globals.Director.WriteDebug(" --- CurrentHeroSeat: " + table.CurrentHeroSeat);
+                Globals.Director.WriteDebug(" --- resizing window try again later");
                 return; // At next iteration this code should not be executed because sizes will be the same, unless the player resizes the window
             }
 
@@ -79,7 +79,8 @@ namespace PokerMuck
             {
                 Globals.Director.WriteDebug("Processing Existing screenshot, returning");
                 // Dispose screenshot
-                if (screenshot != null) screenshot.Dispose();
+                if (screenshot != null) 
+                    screenshot.Dispose();
                 return;
             }
             else
@@ -91,7 +92,7 @@ namespace PokerMuck
             // If we don't know where the player is seated, we don't need to process any further
             if (table.CurrentHeroSeat == 0)
             {
-                Trace.WriteLine(" --- could not find CurrentHeroSeat???");
+                Globals.Director.WriteDebug(" --- could not find CurrentHeroSeat???");
             //    return;
             }
 
@@ -104,51 +105,32 @@ namespace PokerMuck
                 Rectangle actionRect = recognitionMap.GetRectangleFor(action);
                 if (!actionRect.Equals(Rectangle.Empty))
                 {
-                    Trace.WriteLine(" --- Found Rectangle for:: " + action);
+                    Globals.Director.WriteDebug(" --- Found Rectangle for:: " + action);
                     playerCardImages.Add(ScreenshotTaker.Slice(screenshot, actionRect));
                 }
                 else
                 {
-                    Trace.WriteLine("Warning: could not find a rectangle for action " + action);
+                    Globals.Director.WriteDebug("Warning: could not find a rectangle for action " + action);
                 }
             }
 
-            Trace.WriteLine("Matching player cards! ");
-            Trace.WriteLine(" -- checking for card: " + playerCardsActions[0]);
-            Card card1 = matcher.MatchCard(playerCardImages[0], playerCardsActions[0].ToString());
-            Card card2 = matcher.MatchCard(playerCardImages[1], playerCardsActions[1].ToString());
-
-            bool hasCard1 = null != card1;
-            bool hasCard2 = null != card2;
+            Globals.Director.WriteDebug("Matching player cards! ");
             
-            Trace.WriteLine("--- hasCard1: " + hasCard1 + " hasCard2: " + hasCard2);
-
-            if (hasCard1 && hasCard2)
+            //playerCardsActions
+            CardList playerCards = matcher.MatchCards(playerCardImages, false, playerCardsActions);
+            if (playerCards != null)
             {
-                Trace.WriteLine("---- HAS CARDSSSSS!!! YEA!!!!");
-                CardList playerCards = new CardList(2);
-                playerCards.AddCard(card1);
-                playerCards.AddCard(card2);
-            
-                //CardList playerCards = matcher.MatchCards(playerCardImages, false);
-                // if (playerCards != null)
-                // {
-                    Trace.WriteLine("Matched player cards! " + playerCards.ToString());
-                    handler.PlayerHandRecognized(playerCards);
-                // }
-                // else
-                // {
-                //     Trace.WriteLine(" --- Did not find any matching player cards ");
-                // }
-    
+                Globals.Director.WriteDebug("Matched player cards! " + playerCards.ToString());
+                handler.PlayerHandRecognized(playerCards);
             }
             else
             {
-                Trace.WriteLine(" --- Did not find any matching player cards ");
+                Globals.Director.WriteDebug(" --- Did not find any matching player cards ");
             }
             
             // Dispose
-            foreach (Bitmap image in playerCardImages) if (image != null) image.Dispose();
+            foreach (Bitmap image in playerCardImages) 
+                if (image != null) image.Dispose();
 
             /* If community cards are supported, try to match them */
             if (colorMap.SupportsCommunityCards)
@@ -165,24 +147,25 @@ namespace PokerMuck
                     }
                     else
                     {
-                        Trace.WriteLine("Warning: could not find a rectangle for action " + action);
+                        Globals.Director.WriteDebug("Warning: could not find a rectangle for action " + action);
                     }
                 }
             
                 // We try to identify as many cards as possible
-                CardList communityCards = matcher.MatchCards(communityCardImages, true);
+                CardList communityCards = matcher.MatchCards(communityCardImages, true, communityCardsActions);
                 if (communityCards != null && communityCards.Count > 0)
                 {
-                    Trace.WriteLine("~~~ Matched board cards! " + communityCards.ToString());
+                    Globals.Director.WriteDebug("~~~ Matched board cards! " + communityCards.ToString());
                     handler.BoardRecognized(communityCards);
                 }
                 else
                 {
-                    Trace.WriteLine("~~~ Warning: could not find a commnity cards ");
+                    Globals.Director.WriteDebug("~~~ Warning: could not find a commnity cards ");
                 }
             
                 // Dispose
-                foreach (Bitmap image in communityCardImages) if (image != null) image.Dispose();
+                foreach (Bitmap image in communityCardImages) if (image != null) 
+                    image.Dispose();
             }
 
             // Dispose screenshot
