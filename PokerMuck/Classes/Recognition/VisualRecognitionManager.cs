@@ -78,6 +78,9 @@ namespace PokerMuck
             if (this.processingScreenShot)
             {
                 Globals.Director.WriteDebug("Processing Existing screenshot, returning");
+                // Dispose screenshot
+                if (screenshot != null) screenshot.Dispose();
+                return;
             }
             else
             {
