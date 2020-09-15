@@ -22,6 +22,7 @@ namespace PokerMuck
         private VisualMatcher matcher;
         private Window tableWindow;
 
+        private bool processingScreenShot = false;
         public VisualRecognitionManager(Table table, IVisualRecognitionManagerHandler handler)
         {
             Trace.Assert(table.Game != PokerGame.Unknown, "Cannot create a visual recognition manager without knowing the game of the table");
@@ -72,6 +73,15 @@ namespace PokerMuck
                 Trace.WriteLine(" --- CurrentHeroSeat: " + table.CurrentHeroSeat);
                 Trace.WriteLine(" --- resizing window try again later");
                 return; // At next iteration this code should not be executed because sizes will be the same, unless the player resizes the window
+            }
+
+            if (this.processingScreenShot)
+            {
+                Globals.Director.WriteDebug("Processing Existing screenshot, returning");
+            }
+            else
+            {
+                processingScreenShot = true;
             }
 
             int heroSeat = table.CurrentHeroSeat == 0 ? 1 : table.CurrentHeroSeat;
@@ -174,6 +184,8 @@ namespace PokerMuck
 
             // Dispose screenshot
             if (screenshot != null) screenshot.Dispose();
+
+            processingScreenShot = false;
         }
 
         public void Cleanup(){

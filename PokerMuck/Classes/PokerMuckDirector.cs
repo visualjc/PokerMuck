@@ -7,6 +7,7 @@ using System.Threading;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 
 namespace PokerMuck
@@ -418,14 +419,21 @@ namespace PokerMuck
             return false;
         }
 
-        public void WriteDebug(string debugMsg, string className = "")
+        public void WriteDebug(string debugMsg, string className = "",
+            [CallerMemberName] string memberName = null,
+            [CallerFilePath] string filePath = null,
+            [CallerLineNumber] int lineNumber = 0)
         {
             DateTime now = DateTime.Now;
             debugStrBld.Clear();
             debugStrBld.Append(now.ToShortTimeString());
             debugStrBld.Append("\t ~~~");
-            debugStrBld.Append(className);
-            debugStrBld.Append(debugMsg);
+            debugStrBld.AppendFormat("[{0:g}] - c:{1} - m:{2} - {3} : {4}",
+                debugMsg,
+                className,
+                memberName,
+                filePath,
+                lineNumber);
             debugQue.Enqueue(debugStrBld.ToString());
         }
 
