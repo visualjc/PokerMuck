@@ -54,21 +54,21 @@ namespace PokerMuck
             DirectoryInfo di = new DirectoryInfo(CardMatchesDirectory);
 
             FileInfo[] files = di.GetFiles();
-            //Trace.WriteLine(" --- looking for card files to compare: " + files.Length);
+            Globals.Director.WriteDebug(" --- looking for card files to compare: " + files.Length, "VisualMatcher");
             if (files.Length < 52)
             {
-                //Trace.WriteLine(" --- forcing copy to happen: " + files.Length);
+                Globals.Director.WriteDebug(" --- forcing copy to happen: " + files.Length, "VisualMatcher");
                 ReplicateCommonCardsForCurrentClient(true);
             }
             else
             {
-                //Trace.WriteLine(" --- not forcing copy to happen: " + files.Length);
+                Globals.Director.WriteDebug(" --- not forcing copy to happen: " + files.Length, "VisualMatcher");
             }
             
             // Copy each file into it’s new directory.
             foreach (FileInfo fi in di.GetFiles())
             {
-                //Trace.WriteLine(" --- card file: " + fi.FullName);
+                Globals.Director.WriteDebug(" --- card file: " + fi.FullName);
                 cardMatchFiles.Add(fi.FullName);
             }
         }
@@ -82,15 +82,15 @@ namespace PokerMuck
          * Every poker client and every theme of a poker client needs a different set */
         private void ReplicateCommonCardsForCurrentClient(bool force = false)
         {
-            //Trace.WriteLine(" --- ReplicateCommonCardsForCurrentClient: ");
+            Globals.Director.WriteDebug(" --- ReplicateCommonCardsForCurrentClient: ", "VisualMatcher");
             if (force || !Directory.Exists(CardMatchesDirectory))
             {
-                //Trace.WriteLine(" --- ReplicateCommonCardsForCurrentClient: DID the copy");
+                Globals.Director.WriteDebug(" --- ReplicateCommonCardsForCurrentClient: DID the copy", "VisualMatcher");
                 CopyDirectoryAll(new DirectoryInfo(@".\Resources\CardMatches\Common\"), new DirectoryInfo(CardMatchesDirectory));
             }
             else
             {
-                //Trace.WriteLine(" --- ReplicateCommonCardsForCurrentClient: DID NOT copy");
+                Globals.Director.WriteDebug(" --- ReplicateCommonCardsForCurrentClient: DID NOT copy", "VisualMatcher");
             }
         }
 
@@ -106,7 +106,7 @@ namespace PokerMuck
             // Copy each file into it’s new directory.
             foreach (FileInfo fi in source.GetFiles())
             {
-                //Trace.WriteLine(String.Format(@"Copying {0}{1}", target.FullName, fi.Name));
+                Globals.Director.WriteDebug(String.Format(@"Copying {0}{1}", target.FullName, fi.Name));
                 fi.CopyTo(Path.Combine(target.ToString(), fi.Name), true);
             }
 
@@ -133,7 +133,7 @@ namespace PokerMuck
 
             foreach (Bitmap image in images)
             {
-                //Trace.WriteLine(" ----- CARD matching......");
+                Globals.Director.WriteDebug(" ----- CARD matching......");
                 Card card = MatchCard(image);
                 if (card != null)
                 {
@@ -164,7 +164,7 @@ namespace PokerMuck
             double greenDiff = Math.Abs(stats1.Green.Mean - stats2.Green.Mean);
             double redDiff = Math.Abs(stats1.Red.Mean - stats2.Red.Mean);
 
-            //Trace.WriteLine("\t --- Rd: " + redDiff + " Gd: " + greenDiff + " Bd: " + blueDiff);
+            Globals.Director.WriteDebug("\t --- Rd: " + redDiff + " Gd: " + greenDiff + " Bd: " + blueDiff);
             
             return ((redDiff + blueDiff + greenDiff) / 3.0d);
         }
@@ -209,23 +209,23 @@ namespace PokerMuck
 
                 String name = cardMatchFile.Substring(cardMatchFile.Length - 10);
                 
-                //Trace.WriteLine(" --- STARTING COMP: " + name + " for: " + player_card);
+                Globals.Director.WriteDebug(" --- STARTING COMP: " + name + " for: " + player_card);
                 double difference = HistogramBitmapDifference(image, candidateImage);
                 double similarity = TemplateMatchingSimilarity(image, candidateImage);
 
-                //Trace.WriteLine("--- " + player_card + " : " + name + " difference: (" + difference + ") similarity: (" + similarity + ")");
+                Globals.Director.WriteDebug("--- " + player_card + " : " + name + " difference: (" + difference + ") similarity: (" + similarity + ")");
 
 
                 if (difference < minDifference)
                 {
-                    //Trace.WriteLine(" ---- setting the minDifference to: " + difference);
+                    Globals.Director.WriteDebug(" ---- setting the minDifference to: " + difference);
                     minDifference = difference;
                     bestMatchFilename = cardMatchFile;
                 }
 
                 if (similarity > maxSimilarity)
                 {
-                    //Trace.WriteLine(" ---- setting the maxSimilarity to: " + similarity);
+                    Globals.Director.WriteDebug(" ---- setting the maxSimilarity to: " + similarity);
                     maxSimilarity = similarity;
                 }
 
@@ -242,7 +242,7 @@ namespace PokerMuck
 
                     if (!sizesMatch)
                     {
-                        //Trace.WriteLine(" --- Adding " + name + " to possible matches");
+                        Globals.Director.WriteDebug(" --- Adding " + name + " to possible matches");
                         possibleMatches.Add(cardMatchFile, similarity);
                     }
                 }
@@ -250,7 +250,7 @@ namespace PokerMuck
                 candidateImage.Dispose();
             }
 
-            ////Trace.WriteLine("Matched " + bestMatchFilename + " (Difference: " + minDifference + ")");
+            //Globals.Director.WriteDebug("Matched " + bestMatchFilename + " (Difference: " + minDifference + ")");
 
             Card matchedCard = null; // Hold the return value
 
@@ -259,7 +259,7 @@ namespace PokerMuck
             {
                 if (minDifference > PERFECT_MATCH_HISTOGRAM_THRESHOLD && maxSimilarity > POSSIBLE_MATCH_TEMPLATE_THRESHOLD)
                 {
-                    //Trace.WriteLine("Min difference too high (" + minDifference + ") and max similarity above threshold, asking user to confirm our guesses");
+                    Globals.Director.WriteDebug("Min difference too high (" + minDifference + ") and max similarity above threshold, asking user to confirm our guesses");
 
                     Card userCard = null;
                     Globals.Director.RunFromGUIThread((Action)delegate()
@@ -287,7 +287,7 @@ namespace PokerMuck
             /*
             if (possibleMatches.Count == 0)
             {
-                //Trace.WriteLine("Warning: We should ask the user to confirm an image, but there are no possible matches...");
+                Globals.Director.WriteDebug("Warning: We should ask the user to confirm an image, but there are no possible matches...");
                 return null;
             }*/
 
@@ -302,7 +302,7 @@ namespace PokerMuck
             {
                 orderedFilenames.Add(cardMatchFile);
 
-                //Trace.WriteLine(cardMatchFile + " has similarity of " + possibleMatches[cardMatchFile]);
+                Globals.Director.WriteDebug(cardMatchFile + " has similarity of " + possibleMatches[cardMatchFile]);
             }
 
             orderedFilenames.Sort((delegate(String file1, String file2)
@@ -345,11 +345,11 @@ namespace PokerMuck
             try
             {
                 newImage.Save(targetFile, ImageFormat.Bmp);
-                //Trace.WriteLine("Successfully replaced " + targetFile + " with new image");
+                Globals.Director.WriteDebug("Successfully replaced " + targetFile + " with new image");
             }
             catch (Exception)
             {
-                //Trace.WriteLine("Warning! Tried to replace " + targetFile + " with a new image but failed because of an exception");
+                Globals.Director.WriteDebug("Warning! Tried to replace " + targetFile + " with a new image but failed because of an exception");
             }
         }
 

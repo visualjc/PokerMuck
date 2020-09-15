@@ -5,6 +5,7 @@ using System.Text;
 using System.Diagnostics;
 using System.Threading;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -23,6 +24,11 @@ namespace PokerMuck
         private WindowsListener windowsListener;
         private PokerClient pokerClient;
 
+        /* Classses for debugging - replace Trace with this */
+        private Thread debugThread;
+        private ConcurrentQueue<string> debugQue;
+        private StringBuilder debugStrBld = new StringBuilder();
+        
         /* Table list */
         private List<Table> tables;
 
@@ -49,6 +55,8 @@ namespace PokerMuck
 
         public PokerMuckDirector()
         {
+            StartDebugging();
+
             InitializeSupportedPokerClientList();
 
             // Initialize the list of tables (no more than 20 concurrent games to begin with right?)
@@ -410,6 +418,45 @@ namespace PokerMuck
             return false;
         }
 
+        public void WriteDebug(string debugMsg, string className = "")
+        {
+            DateTime now = DateTime.Now;
+            debugStrBld.Clear();
+            debugStrBld.Append(now.ToShortTimeString());
+            debugStrBld.Append("\t ~~~");
+            debugStrBld.Append(className);
+            debugStrBld.Append(debugMsg);
+            debugQue.Enqueue(debugStrBld.ToString());
+        }
+
+        private void WriteLog()
+        {
+            while (null != debugQue)
+            {
+                string message;
+                while (debugQue.TryDequeue(out message))
+                {
+                    Trace.WriteLine(message);
+                    Thread.Sleep(100);
+                }
+
+                Thread.Sleep((100));
+            }
+        }
+        private void StartDebugging()
+        {
+            if (null == debugQue)
+            {
+                debugQue = new ConcurrentQueue<string>();
+            }
+            
+            ThreadStart threadDelegate = new ThreadStart(this.WriteLog);
+            if(null == debugThread) {
+                this.debugThread = new Thread(threadDelegate);
+            }
+            this.debugThread.Start();
+        }
+        
         // Cleanup stuff
         private void Cleanup()
         {
