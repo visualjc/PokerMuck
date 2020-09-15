@@ -19,6 +19,16 @@ namespace PokerMuck
             InitializeLanguage(language);
         }
 
+        public override double MatchTemplateThreshold()
+        {
+            return 0.7d;
+        }
+
+        public override double MatchHistogramThreshold()
+        {
+            return 0.0029d;
+        }
+        
         protected override void InitializeData()
         {
             if (CurrentLanguage == "English")

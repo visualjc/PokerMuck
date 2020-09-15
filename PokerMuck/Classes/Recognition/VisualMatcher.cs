@@ -54,21 +54,21 @@ namespace PokerMuck
             DirectoryInfo di = new DirectoryInfo(CardMatchesDirectory);
 
             FileInfo[] files = di.GetFiles();
-            Globals.Director.WriteDebug(" --- looking for card files to compare: " + files.Length, "VisualMatcher");
+            //Globals.Director.WriteDebug(" --- looking for card files to compare: " + files.Length, "VisualMatcher");
             if (files.Length < 52)
             {
-                Globals.Director.WriteDebug(" --- forcing copy to happen: " + files.Length, "VisualMatcher");
+                //Globals.Director.WriteDebug(" --- forcing copy to happen: " + files.Length, "VisualMatcher");
                 ReplicateCommonCardsForCurrentClient(true);
             }
             else
             {
-                Globals.Director.WriteDebug(" --- not forcing copy to happen: " + files.Length, "VisualMatcher");
+                //Globals.Director.WriteDebug(" --- not forcing copy to happen: " + files.Length, "VisualMatcher");
             }
             
             // Copy each file into it’s new directory.
             foreach (FileInfo fi in di.GetFiles())
             {
-                Globals.Director.WriteDebug(" --- card file: " + fi.FullName);
+                //Globals.Director.WriteDebug(" --- card file: " + fi.FullName);
                 cardMatchFiles.Add(fi.FullName);
             }
         }
@@ -82,15 +82,15 @@ namespace PokerMuck
          * Every poker client and every theme of a poker client needs a different set */
         private void ReplicateCommonCardsForCurrentClient(bool force = false)
         {
-            Globals.Director.WriteDebug(" --- ReplicateCommonCardsForCurrentClient: ", "VisualMatcher");
+            //Globals.Director.WriteDebug(" --- ReplicateCommonCardsForCurrentClient: ", "VisualMatcher");
             if (force || !Directory.Exists(CardMatchesDirectory))
             {
-                Globals.Director.WriteDebug(" --- ReplicateCommonCardsForCurrentClient: DID the copy", "VisualMatcher");
+                //Globals.Director.WriteDebug(" --- ReplicateCommonCardsForCurrentClient: DID the copy", "VisualMatcher");
                 CopyDirectoryAll(new DirectoryInfo(@".\Resources\CardMatches\Common\"), new DirectoryInfo(CardMatchesDirectory));
             }
             else
             {
-                Globals.Director.WriteDebug(" --- ReplicateCommonCardsForCurrentClient: DID NOT copy", "VisualMatcher");
+                //Globals.Director.WriteDebug(" --- ReplicateCommonCardsForCurrentClient: DID NOT copy", "VisualMatcher");
             }
         }
 
@@ -106,7 +106,7 @@ namespace PokerMuck
             // Copy each file into it’s new directory.
             foreach (FileInfo fi in source.GetFiles())
             {
-                Globals.Director.WriteDebug(String.Format(@"Copying {0}{1}", target.FullName, fi.Name));
+                //Globals.Director.WriteDebug(String.Format(@"Copying {0}{1}", target.FullName, fi.Name));
                 fi.CopyTo(Path.Combine(target.ToString(), fi.Name), true);
             }
 
@@ -125,7 +125,8 @@ namespace PokerMuck
         /* Tries to match a set of bitmaps into a card list. 
          * @param allowPartialMatch If any card fails to match, the operation is aborted and the results obtained so far are returned
          *  (but they might be incomplete). If this parameter is set to false, null is returned on failure. */
-        public CardList MatchCards(List<Bitmap> images, bool allowPartialMatch, ArrayList actionMap)
+        public CardList MatchCards(List<Bitmap> images, bool allowPartialMatch, ArrayList actionMap,
+            double perfectMatchHistogramThreshold = 0, double possibleMatchTemplateThreshold = 0)
         {
             if (images.Count == 0) return null;
 
@@ -134,8 +135,9 @@ namespace PokerMuck
             int i = 0;
             foreach (Bitmap image in images)
             {
-                Globals.Director.WriteDebug(" --- action: " + actionMap[i].ToString());
-                Card card = MatchCard(image, actionMap[i].ToString());
+                //Globals.Director.WriteDebug(" --- action: " + actionMap[i].ToString());
+                Card card = MatchCard(image, actionMap[i].ToString(), 
+                    perfectMatchHistogramThreshold, possibleMatchTemplateThreshold);
                 ++i;
                 if (card != null)
                 {
@@ -166,7 +168,7 @@ namespace PokerMuck
             double greenDiff = Math.Abs(stats1.Green.Mean - stats2.Green.Mean);
             double redDiff = Math.Abs(stats1.Red.Mean - stats2.Red.Mean);
 
-            Globals.Director.WriteDebug("\t --- Rd: " + redDiff + " Gd: " + greenDiff + " Bd: " + blueDiff);
+            //Globals.Director.WriteDebug("\t --- Rd: " + redDiff + " Gd: " + greenDiff + " Bd: " + blueDiff);
             
             return ((redDiff + blueDiff + greenDiff) / 3.0d);
         }
@@ -183,10 +185,21 @@ namespace PokerMuck
 
         /* It returns null if there are no good matches 
          * If training mode is enabled, a window might ask the user to aid the algorithm find the best match */
-        public Card MatchCard(Bitmap image, string player_card = null)
+        public Card MatchCard(Bitmap image, string player_card = null, 
+            double perfectMatchHistogramThreshold = 0, double possibleMatchTemplateThreshold = 0)
         {
             if (image == null) return null;
 
+            if (0 == perfectMatchHistogramThreshold)
+            {
+                perfectMatchHistogramThreshold = PERFECT_MATCH_HISTOGRAM_THRESHOLD;
+            }
+
+            if (0 == possibleMatchTemplateThreshold)
+            {
+                possibleMatchTemplateThreshold = POSSIBLE_MATCH_TEMPLATE_THRESHOLD; 
+            }
+            
             if (player_card == null) player_card = "unk";
             
             double minDifference = Double.MaxValue;
@@ -211,30 +224,30 @@ namespace PokerMuck
 
                 String name = cardMatchFile/*.Substring(cardMatchFile.Length - 25)*/ + "\n";
                 
-                Globals.Director.WriteDebug(" --- STARTING COMP: " + name + " for: " + player_card);
+                //Globals.Director.WriteDebug(" --- STARTING COMP: " + name + " for: " + player_card);
                 double difference = HistogramBitmapDifference(image, candidateImage);
                 double similarity = TemplateMatchingSimilarity(image, candidateImage);
 
-                Globals.Director.WriteDebug("--- " + player_card + " : " + name + " difference: (" + difference + ") similarity: (" + similarity + ")");
+                //Globals.Director.WriteDebug("--- " + player_card + " : " + name + " difference: (" + difference + ") similarity: (" + similarity + ")");
 
 
                 if (difference < minDifference)
                 {
-                    Globals.Director.WriteDebug(" ---- setting the minDifference to: " + difference);
+                    //Globals.Director.WriteDebug(" ---- setting the minDifference to: " + difference);
                     minDifference = difference;
                     bestMatchFilename = cardMatchFile;
                 }
 
                 if (similarity > maxSimilarity)
                 {
-                    Globals.Director.WriteDebug(" ---- setting the maxSimilarity to: " + similarity);
+                    //Globals.Director.WriteDebug(" ---- setting the maxSimilarity to: " + similarity);
                     maxSimilarity = similarity;
                 }
 
                 /* We use histogram difference to match perfect copies of the image (after the training phase is over)
                  * but if they are different, we use the template matching as an indicator of similarity */
 
-                if (difference > PERFECT_MATCH_HISTOGRAM_THRESHOLD && similarity > POSSIBLE_MATCH_TEMPLATE_THRESHOLD)
+                if (difference > perfectMatchHistogramThreshold && similarity > possibleMatchTemplateThreshold)
                 {
                     /* Our set of common cards is typically larger than the actual client matches 
                      * (although there could be rare exceptions that would not influence negatively the behavior of the algorithm).
@@ -244,7 +257,7 @@ namespace PokerMuck
 
                     // if (!sizesMatch)
                     // {
-                        Globals.Director.WriteDebug("\n\n\n --- Adding " + name + " to possible matches");
+                        //Globals.Director.WriteDebug("\n\n\n --- Adding " + name + " to possible matches");
                         possibleMatches.Add(cardMatchFile, similarity);
                     // }
                 }
@@ -252,16 +265,16 @@ namespace PokerMuck
                 candidateImage.Dispose();
             }
 
-            //Globals.Director.WriteDebug("Matched " + bestMatchFilename + " (Difference: " + minDifference + ")");
+            ////Globals.Director.WriteDebug("Matched " + bestMatchFilename + " (Difference: " + minDifference + ")");
 
             Card matchedCard = null; // Hold the return value
 
             /* If we have a possible match, but we are not too sure about it, we can ask the user to confirm our guesses */
             if (Globals.UserSettings.TrainingModeEnabled)
             {
-                if (minDifference > PERFECT_MATCH_HISTOGRAM_THRESHOLD && maxSimilarity > POSSIBLE_MATCH_TEMPLATE_THRESHOLD)
+                if (minDifference > perfectMatchHistogramThreshold && maxSimilarity > possibleMatchTemplateThreshold)
                 {
-                    Globals.Director.WriteDebug("Min difference too high (" + minDifference + ") and max similarity (" + maxSimilarity + ") above threshold, asking user to confirm our guesses");
+                    //Globals.Director.WriteDebug("Min difference too high (" + minDifference + ") and max similarity (" + maxSimilarity + ") above threshold, asking user to confirm our guesses");
 
                     Card userCard = null;
                     Globals.Director.RunFromGUIThread((Action)delegate()
@@ -277,9 +290,10 @@ namespace PokerMuck
                 }
             }
 
-            Globals.Director.WriteDebug("\n\t bestMatchFile: " + bestMatchFilename + "\n\t");
+            //Globals.Director.WriteDebug("\n\t bestMatchFile: " + bestMatchFilename + "\n\t");
             // If the user has selected a card, matchedCard is an object and this is skipped
-            if (minDifference < PERFECT_MATCH_HISTOGRAM_THRESHOLD && matchedCard == null && bestMatchFilename != "") matchedCard = Card.CreateFromPath(bestMatchFilename);
+            if (minDifference < perfectMatchHistogramThreshold && matchedCard == null && bestMatchFilename != "") 
+                matchedCard = Card.CreateFromPath(bestMatchFilename);
 
             return matchedCard;
         }
@@ -290,7 +304,7 @@ namespace PokerMuck
             /*
             if (possibleMatches.Count == 0)
             {
-                Globals.Director.WriteDebug("Warning: We should ask the user to confirm an image, but there are no possible matches...");
+                //Globals.Director.WriteDebug("Warning: We should ask the user to confirm an image, but there are no possible matches...");
                 return null;
             }*/
 
@@ -305,7 +319,7 @@ namespace PokerMuck
             {
                 orderedFilenames.Add(cardMatchFile);
 
-                Globals.Director.WriteDebug(cardMatchFile + " has similarity of " + possibleMatches[cardMatchFile]);
+                //Globals.Director.WriteDebug(cardMatchFile + " has similarity of " + possibleMatches[cardMatchFile]);
             }
 
             orderedFilenames.Sort((delegate(String file1, String file2)
@@ -314,7 +328,7 @@ namespace PokerMuck
             }));
 
             // Create cards from filenames
-            const int MAX_CARDS_TO_DISPLAY = 15;
+            const int MAX_CARDS_TO_DISPLAY = 5;
             int i = 0;
             foreach (String filename in orderedFilenames)
             {
@@ -348,11 +362,11 @@ namespace PokerMuck
             try
             {
                 newImage.Save(targetFile, ImageFormat.Bmp);
-                Globals.Director.WriteDebug("Successfully replaced " + targetFile + " with new image");
+                //Globals.Director.WriteDebug("Successfully replaced " + targetFile + " with new image");
             }
             catch (Exception)
             {
-                Globals.Director.WriteDebug("Warning! Tried to replace " + targetFile + " with a new image but failed because of an exception");
+                //Globals.Director.WriteDebug("Warning! Tried to replace " + targetFile + " with a new image but failed because of an exception");
             }
         }
 

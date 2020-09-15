@@ -148,6 +148,16 @@ namespace PokerMuck
             }
         }
 
+        public double MatchHistogramThreshold()
+        {
+            return pokerClient.MatchHistogramThreshold();
+        }
+
+        public double MatchTemplateThreshold()
+        {
+            return pokerClient.MatchTemplateThreshold();
+        }
+        
         public bool IsVisualRecognitionPossible()
         {
             return pokerClient.SupportsVisualRecognition && 

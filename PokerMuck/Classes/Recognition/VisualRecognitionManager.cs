@@ -117,7 +117,8 @@ namespace PokerMuck
             Globals.Director.WriteDebug("Matching player cards! ");
             
             //playerCardsActions
-            CardList playerCards = matcher.MatchCards(playerCardImages, false, playerCardsActions);
+            CardList playerCards = matcher.MatchCards(playerCardImages, false, playerCardsActions, 
+                table.MatchHistogramThreshold(), table.MatchTemplateThreshold());
             if (playerCards != null)
             {
                 Globals.Director.WriteDebug("Matched player cards! " + playerCards.ToString());
@@ -152,7 +153,8 @@ namespace PokerMuck
                 }
             
                 // We try to identify as many cards as possible
-                CardList communityCards = matcher.MatchCards(communityCardImages, true, communityCardsActions);
+                CardList communityCards = matcher.MatchCards(communityCardImages, true, communityCardsActions,
+                    table.MatchHistogramThreshold(), table.MatchTemplateThreshold());
                 if (communityCards != null && communityCards.Count > 0)
                 {
                     Globals.Director.WriteDebug("~~~ Matched board cards! " + communityCards.ToString());

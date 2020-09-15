@@ -94,6 +94,24 @@ namespace PokerMuck
         /* Given a window title, it returns what kind of game this is */
         public abstract PokerGameType GetPokerGameTypeFromWindowTitle(String windowTitle);
 
+        /**
+         * These two methods are here to allow the PokerClient to override
+         * the max/min threshold to match cards.
+         * Some of the clients use rounded cards that pull background colors around
+         * the edge, which then makes the cards slightly different
+         * between the flop and hand cards.
+         * -APT does this, Global does and might have this same issue
+         */
+        public virtual double MatchTemplateThreshold()
+        {
+            return 0.0d;
+        }
+
+        public virtual double MatchHistogramThreshold()
+        {
+            return 0.0d;
+        }
+        
         /* Given the table token line, it tries to infer the maximum number of seats available
          * from the hand_history_table_token line of the hand history
          * (some clients' histories do not explicitly specify this value) 
