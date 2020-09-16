@@ -350,7 +350,7 @@ namespace PokerMuck
 
         void handHistoryParser_PlayerIsSeated(string playerName, int seatNumber)
         {
-            Trace.WriteLine(String.Format("Player added: {0}", playerName));
+            Globals.Director.WriteDebug(String.Format("Player added: {0}", playerName));
 
             // Is this player already in the table's player's list?
             Player result = FindPlayer(playerName);
@@ -403,7 +403,7 @@ namespace PokerMuck
 
         private void handHistoryParser_GameDiscovered(string game)
         {
-            Trace.WriteLine(String.Format("Game discovered! {0}",game));
+            Globals.Director.WriteDebug(String.Format("Game discovered! {0}",game));
 
             // Find to what game this game string corresponds
             Game = pokerClient.GetPokerGameFromGameDescription(game);
@@ -413,12 +413,13 @@ namespace PokerMuck
             // Holdem?
             if (foundParser = (Game == PokerGame.Holdem))
             {
+                Globals.Director.WriteDebug("-- Found parser for hold'm");
                 handHistoryParser = new HoldemHHParser(pokerClient, System.IO.Path.GetFileName(handHistoryFilePath));
                 statistics = new HoldemTableStatistics(this);
             }
             else if (Game == PokerGame.Unknown)
             {
-                Trace.WriteLine("We weren't able to find a better parser for this Game");
+                Globals.Director.WriteDebug("### ERROR:: We weren't able to find a better parser for this Game");
             }
 
             // If we replaced our parser, we need to register the event handlers

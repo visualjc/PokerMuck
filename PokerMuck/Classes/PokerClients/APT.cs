@@ -76,7 +76,7 @@ namespace PokerMuck
                  Ex. Seat 1: stallion089 (2105 in chips) => 1,"stallion089" 
                  * It ignores those who are marked as "out of hand"
                  */
-                regex.Add("hand_history_detect_player_in_game", @"Seat (?<seatNumber>[\d]+): (?<playerName>.+) .*\(.?[\d\.]+ in chips\) (?!out of hand)");
+                regex.Add("hand_history_detect_player_in_game", @"Seat (?<seatNumber>[\d]+): (?<playerName>.+) .*\(.?[\d\.]+ in chips\)$");
 
                 /* Recognize mucked hands
                  Ex. Seat 1: stallion089 (button) (small blind) mucked [5d 5s]
@@ -149,14 +149,16 @@ namespace PokerMuck
         /* Given a game description, returns the corresponding PokerGame */
         public override PokerGame GetPokerGameFromGameDescription(string gameDescription)
         {
-            Trace.WriteLine("Found game description: " + gameDescription);
+            Globals.Director.WriteDebug("Found game description: " + gameDescription);
 
             Match match = GetRegex("game_description_holdem").Match(gameDescription);
             if (match.Success)
             {
+                Globals.Director.WriteDebug("-- YES Found game description: " + gameDescription);
                 return PokerGame.Holdem;
             }
 
+            Globals.Director.WriteDebug("-- NO NOT Found game description: " + gameDescription);
             return PokerGame.Unknown; //Default
         }
 

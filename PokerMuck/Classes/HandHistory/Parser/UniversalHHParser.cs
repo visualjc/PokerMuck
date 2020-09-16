@@ -19,23 +19,26 @@ namespace PokerMuck
             : base(pokerClient, handhistoryFilename)
         {
             reGameType = pokerClient.GetRegex("hand_history_game_token");
+            
         }
 
         public override void ParseLine(string line)
         {
             base.ParseLine(line);
-
+            
             Match match = reGameType.Match(line);
-
+            Globals.Director.WriteDebug("reGameType match:  " + line + " " + match.Success );
+            
             if (match.Success)
             {
                 String gameType = match.Groups["gameType"].Value;
 
-                if (GameDiscovered != null) GameDiscovered(gameType);
+                if (GameDiscovered != null) 
+                    GameDiscovered(gameType);
             }
             else
             {
-                Trace.WriteLine("Failed to match a gameType from the universal parser: " + line);
+                Globals.Director.WriteDebug("\n\t -- ERROR: Failed to match a gameType from the universal parser: " + line);
             }
         }
 

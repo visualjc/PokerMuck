@@ -17,7 +17,8 @@ namespace PokerMuck
 
         protected void OnPlayerMuckHandAvailable(String playerName, Hand hand)
         {
-            if (PlayerMuckHandAvailable != null) PlayerMuckHandAvailable(playerName, hand);
+            if (PlayerMuckHandAvailable != null) 
+                PlayerMuckHandAvailable(playerName, hand);
         }
 
         /* We found hero's nickname */
@@ -26,7 +27,8 @@ namespace PokerMuck
 
         protected void OnHeroNameFound(String heroName)
         {
-            if (HeroNameFound != null) HeroNameFound(heroName);
+            if (HeroNameFound != null) 
+                HeroNameFound(heroName);
         }
 
         /* A player is sitting at the table with us */
@@ -35,7 +37,8 @@ namespace PokerMuck
 
         protected void OnPlayerIsSeated(String playerName, int seatNumber)
         {
-            if (PlayerIsSeated != null) PlayerIsSeated(playerName, seatNumber);
+            if (PlayerIsSeated != null) 
+                PlayerIsSeated(playerName, seatNumber);
         }
 
         /* Cards are about to be dealt */
@@ -44,7 +47,8 @@ namespace PokerMuck
 
         protected void OnHoleCardsWillBeDealt()
         {
-            if (HoleCardsWillBeDealt != null) HoleCardsWillBeDealt();
+            if (HoleCardsWillBeDealt != null) 
+                HoleCardsWillBeDealt();
         }
 
         /* A showdown is about to happen */
@@ -53,7 +57,8 @@ namespace PokerMuck
 
         protected void OnShowdownWillBegin()
         {
-            if (ShowdownWillBegin != null) ShowdownWillBegin();
+            if (ShowdownWillBegin != null) 
+                ShowdownWillBegin();
         }
 
         /* A new table has been created for a game */
@@ -62,7 +67,8 @@ namespace PokerMuck
 
         protected void OnNewTableHasBeenCreated(String gameId, String tableId)
         {
-            if (NewTableHasBeenCreated != null) NewTableHasBeenCreated(gameId, tableId);
+            if (NewTableHasBeenCreated != null) 
+                NewTableHasBeenCreated(gameId, tableId);
         }
 
         /* We found the max seating capacity for a table */
@@ -71,7 +77,8 @@ namespace PokerMuck
 
         protected void OnFoundTableMaxSeatingCapacity(int maxSeatingCapacity)
         {
-            if (FoundTableMaxSeatingCapacity != null) FoundTableMaxSeatingCapacity(maxSeatingCapacity);
+            if (FoundTableMaxSeatingCapacity != null) 
+                FoundTableMaxSeatingCapacity(maxSeatingCapacity);
         }
 
 
@@ -81,7 +88,8 @@ namespace PokerMuck
 
         protected void OnRoundHasTerminated()
         {
-            if (RoundHasTerminated != null) RoundHasTerminated();
+            if (RoundHasTerminated != null) 
+                RoundHasTerminated();
         }
 
         /* Reference to the poker client in use */
