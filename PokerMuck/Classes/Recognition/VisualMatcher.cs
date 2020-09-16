@@ -18,6 +18,7 @@ namespace PokerMuck
     {
         const double PERFECT_MATCH_HISTOGRAM_THRESHOLD = 0.001d;
         const double POSSIBLE_MATCH_TEMPLATE_THRESHOLD = 0.7d;
+        const double ALLOWABLE_MATCH_TEMPLATE_THRESHOLD = 0.998d;
 
         private PokerClient client;
         private List<String> cardMatchFiles;
@@ -126,7 +127,9 @@ namespace PokerMuck
          * @param allowPartialMatch If any card fails to match, the operation is aborted and the results obtained so far are returned
          *  (but they might be incomplete). If this parameter is set to false, null is returned on failure. */
         public CardList MatchCards(List<Bitmap> images, bool allowPartialMatch, ArrayList actionMap,
-            double perfectMatchHistogramThreshold = 0, double possibleMatchTemplateThreshold = 0)
+            double perfectMatchHistogramThreshold = 0, 
+            double possibleMatchTemplateThreshold = 0,
+            double allowableSimilarityThreshold = 0)
         {
             if (images.Count == 0) return null;
 
@@ -137,7 +140,9 @@ namespace PokerMuck
             {
                 //Globals.Director.WriteDebug(" --- action: " + actionMap[i].ToString());
                 Card card = MatchCard(image, actionMap[i].ToString(), 
-                    perfectMatchHistogramThreshold, possibleMatchTemplateThreshold);
+                    perfectMatchHistogramThreshold, 
+                    possibleMatchTemplateThreshold, 
+                    allowableSimilarityThreshold);
                 ++i;
                 if (card != null)
                 {
@@ -185,19 +190,26 @@ namespace PokerMuck
 
         /* It returns null if there are no good matches 
          * If training mode is enabled, a window might ask the user to aid the algorithm find the best match */
-        public Card MatchCard(Bitmap image, string player_card = null, 
-            double perfectMatchHistogramThreshold = 0, double possibleMatchTemplateThreshold = 0)
+        public Card MatchCard(Bitmap image, string player_card = null,
+            double perfectMatchHistogramThreshold = 0,
+            double possibleMatchTemplateThreshold = 0, 
+            double allowableSimilarityThreshold = 0)
         {
             if (image == null) return null;
 
-            if (0 == perfectMatchHistogramThreshold)
+            if (0.0d == perfectMatchHistogramThreshold)
             {
                 perfectMatchHistogramThreshold = PERFECT_MATCH_HISTOGRAM_THRESHOLD;
             }
 
-            if (0 == possibleMatchTemplateThreshold)
+            if (0.0d == possibleMatchTemplateThreshold)
             {
                 possibleMatchTemplateThreshold = POSSIBLE_MATCH_TEMPLATE_THRESHOLD; 
+            }
+
+            if (0.0d == allowableSimilarityThreshold)
+            {
+                allowableSimilarityThreshold = ALLOWABLE_MATCH_TEMPLATE_THRESHOLD;
             }
             
             if (player_card == null) player_card = "unk";
@@ -288,16 +300,18 @@ namespace PokerMuck
                 }
             }
 
-            Globals.Director.WriteDebug("\n\t Card Position: " + player_card + "\n\t");
-            Globals.Director.WriteDebug("Matched " + bestMatchFilename.Substring(bestMatchFilename.Length-5) + " (Difference: " + minDifference + ")" + " (Similarity: " + maxSimilarity + ")");
-            Globals.Director.WriteDebug("\n\t bestMatchFile: " + bestMatchFilename + "\n\t");
+            
+            // Globals.Director.WriteDebug("\n\t Card Position: " + player_card + "\n\t");
+            // Globals.Director.WriteDebug("Matched " + bestMatchFilename.Substring(bestMatchFilename.Length-5) + " (Difference: " + minDifference + ")" + " (Similarity: " + maxSimilarity + ")");
+            // Globals.Director.WriteDebug("\n\t bestMatchFile: " + bestMatchFilename + "\n\t");
+            // Globals.Director.WriteDebug("\n\t allowableSimilarityThreshold: " + allowableSimilarityThreshold + "\n\t");
             // If the user has selected a card, matchedCard is an object and this is skipped
             if (minDifference < perfectMatchHistogramThreshold && matchedCard == null && bestMatchFilename != "") { 
                 Globals.Director.WriteDebug("\t --- creating from minDiff");
                 matchedCard = Card.CreateFromPath(bestMatchFilename);
             }
 
-            if (maxSimilarity > 0.96d && matchedCard == null && bestMatchFilename != "")
+            if (maxSimilarity > allowableSimilarityThreshold && matchedCard == null && bestMatchFilename != "")
             {
                 Globals.Director.WriteDebug("\t --- creating from maxSim: " + maxSimilarity);
                 matchedCard = Card.CreateFromPath(bestMatchFilename);

@@ -28,7 +28,12 @@ namespace PokerMuck
         {
             return 0.0029d;
         }
-        
+
+        public override double AllowableMatchTemplateThreshold()
+        {
+            return 0.96d;
+        }
+
         protected override void InitializeData()
         {
             if (CurrentLanguage == "English")

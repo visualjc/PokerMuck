@@ -111,6 +111,11 @@ namespace PokerMuck
         {
             return 0.0d;
         }
+
+        public virtual double AllowableMatchTemplateThreshold()
+        {
+            return 0.0;
+        }
         
         /* Given the table token line, it tries to infer the maximum number of seats available
          * from the hand_history_table_token line of the hand history

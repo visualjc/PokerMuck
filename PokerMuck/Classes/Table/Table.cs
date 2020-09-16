@@ -158,6 +158,11 @@ namespace PokerMuck
             return pokerClient.MatchTemplateThreshold();
         }
         
+        public double AllowableMatchTemplateThreshold()
+        {
+            return pokerClient.AllowableMatchTemplateThreshold();
+        }
+        
         public bool IsVisualRecognitionPossible()
         {
             return pokerClient.SupportsVisualRecognition && 
