@@ -265,8 +265,6 @@ namespace PokerMuck
                 candidateImage.Dispose();
             }
 
-            ////Globals.Director.WriteDebug("Matched " + bestMatchFilename + " (Difference: " + minDifference + ")");
-
             Card matchedCard = null; // Hold the return value
 
             /* If we have a possible match, but we are not too sure about it, we can ask the user to confirm our guesses */
@@ -290,10 +288,20 @@ namespace PokerMuck
                 }
             }
 
-            //Globals.Director.WriteDebug("\n\t bestMatchFile: " + bestMatchFilename + "\n\t");
+            Globals.Director.WriteDebug("\n\t Card Position: " + player_card + "\n\t");
+            Globals.Director.WriteDebug("Matched " + bestMatchFilename.Substring(bestMatchFilename.Length-5) + " (Difference: " + minDifference + ")" + " (Similarity: " + maxSimilarity + ")");
+            Globals.Director.WriteDebug("\n\t bestMatchFile: " + bestMatchFilename + "\n\t");
             // If the user has selected a card, matchedCard is an object and this is skipped
-            if (minDifference < perfectMatchHistogramThreshold && matchedCard == null && bestMatchFilename != "") 
+            if (minDifference < perfectMatchHistogramThreshold && matchedCard == null && bestMatchFilename != "") { 
+                Globals.Director.WriteDebug("\t --- creating from minDiff");
                 matchedCard = Card.CreateFromPath(bestMatchFilename);
+            }
+
+            if (maxSimilarity > 0.96d && matchedCard == null && bestMatchFilename != "")
+            {
+                Globals.Director.WriteDebug("\t --- creating from maxSim: " + maxSimilarity);
+                matchedCard = Card.CreateFromPath(bestMatchFilename);
+            }
 
             return matchedCard;
         }
