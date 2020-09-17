@@ -27,6 +27,7 @@ namespace PokerMuck
         protected const int MAX_SEATING_CAPACITY_HEADS_UP = 2;
 
         protected Hashtable regex;
+        protected Hashtable compiledRegex;
         protected Hashtable config;
 
         private ArrayList supportedVisualRecognitionThemes;
@@ -252,8 +253,18 @@ namespace PokerMuck
         public Regex GetRegex(String key){
             Trace.Assert(regex.ContainsKey(key),String.Format("--- The derived PokerClient class does not include the regex key: " + key));
             
+            //check for compiled regex first,
+            //this keeps us from creating the same regex over and over.
+            Regex existingRegex = (Regex) compiledRegex[key];
+
+            if (null != existingRegex)
+                return existingRegex;
+
             string pattern = (String)regex[key];
-            return new Regex(pattern, regexOptions);
+            existingRegex = new Regex(pattern, regexOptions);
+            compiledRegex[key] = existingRegex;
+            
+            return existingRegex;
         }
 
 

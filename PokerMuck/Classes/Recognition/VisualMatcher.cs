@@ -307,13 +307,13 @@ namespace PokerMuck
             // Globals.Director.WriteDebug("\n\t allowableSimilarityThreshold: " + allowableSimilarityThreshold + "\n\t");
             // If the user has selected a card, matchedCard is an object and this is skipped
             if (minDifference < perfectMatchHistogramThreshold && matchedCard == null && bestMatchFilename != "") { 
-                Globals.Director.WriteDebug("\t --- creating from minDiff");
+                //Globals.Director.WriteDebug("\t --- creating from minDiff");
                 matchedCard = Card.CreateFromPath(bestMatchFilename);
             }
 
             if (maxSimilarity > allowableSimilarityThreshold && matchedCard == null && bestMatchFilename != "")
             {
-                Globals.Director.WriteDebug("\t --- creating from maxSim: " + maxSimilarity);
+                //Globals.Director.WriteDebug("\t --- creating from maxSim: " + maxSimilarity);
                 matchedCard = Card.CreateFromPath(bestMatchFilename);
             }
 

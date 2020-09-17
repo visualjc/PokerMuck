@@ -27,7 +27,7 @@ namespace PokerMuck
             base.ParseLine(line);
             
             Match match = reGameType.Match(line);
-            Globals.Director.WriteDebug("reGameType match:  " + line + " " + match.Success );
+            //Globals.Director.WriteDebug("reGameType match:  " + line + " " + match.Success );
             
             if (match.Success)
             {

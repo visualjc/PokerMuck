@@ -59,8 +59,8 @@ namespace PokerMuck
              * we resize the window and retake the screenshot */
             if (!screenshot.Size.Equals(recognitionMap.OriginalMapSize))
             {
-                Globals.Director.WriteDebug(String.Format("Screenshot size ({0}x{1}) differs from our map image ({2}x{3}), resizing window...", 
-                    screenshot.Size.Width, screenshot.Size.Height, recognitionMap.OriginalMapSize.Width, recognitionMap.OriginalMapSize.Height));
+                // Globals.Director.WriteDebug(String.Format("Screenshot size ({0}x{1}) differs from our map image ({2}x{3}), resizing window...", 
+                //     screenshot.Size.Width, screenshot.Size.Height, recognitionMap.OriginalMapSize.Width, recognitionMap.OriginalMapSize.Height));
 
                 Size winSize = tableWindow.Size;
 
@@ -70,14 +70,14 @@ namespace PokerMuck
                 Size newSize = winSize - difference;
 
                 tableWindow.Resize(newSize, true);
-                Globals.Director.WriteDebug(" --- CurrentHeroSeat: " + table.CurrentHeroSeat);
-                Globals.Director.WriteDebug(" --- resizing window try again later");
+                // Globals.Director.WriteDebug(" --- CurrentHeroSeat: " + table.CurrentHeroSeat);
+                // Globals.Director.WriteDebug(" --- resizing window try again later");
                 return; // At next iteration this code should not be executed because sizes will be the same, unless the player resizes the window
             }
 
             if (this.processingScreenShot)
             {
-                Globals.Director.WriteDebug("Processing Existing screenshot, returning");
+                //Globals.Director.WriteDebug("Processing Existing screenshot, returning");
                 // Dispose screenshot
                 if (screenshot != null) 
                     screenshot.Dispose();
@@ -92,8 +92,8 @@ namespace PokerMuck
             // If we don't know where the player is seated, we don't need to process any further
             if (table.CurrentHeroSeat == 0)
             {
-                Globals.Director.WriteDebug(" --- could not find CurrentHeroSeat???");
-            //    return;
+                //Globals.Director.WriteDebug(" --- could not find CurrentHeroSeat???");
+                return;
             }
 
             /* Try to match player cards */
@@ -101,11 +101,11 @@ namespace PokerMuck
             ArrayList playerCardsActions = colorMap.GetPlayerCardsActions(heroSeat);
 
             foreach(String action in playerCardsActions){
-                Trace.WriteLine(" --- PlayerCardsActions: " + action);
+                //Globals.Director.WriteDebug(" --- PlayerCardsActions: " + action);
                 Rectangle actionRect = recognitionMap.GetRectangleFor(action);
                 if (!actionRect.Equals(Rectangle.Empty))
                 {
-                    Globals.Director.WriteDebug(" --- Found Rectangle for:: " + action);
+                    //Globals.Director.WriteDebug(" --- Found Rectangle for:: " + action);
                     playerCardImages.Add(ScreenshotTaker.Slice(screenshot, actionRect));
                 }
                 else
@@ -114,7 +114,7 @@ namespace PokerMuck
                 }
             }
 
-            Globals.Director.WriteDebug("Matching player cards! ");
+            //Globals.Director.WriteDebug("Matching player cards! ");
             
             //playerCardsActions
             CardList playerCards = matcher.MatchCards(playerCardImages,
@@ -125,7 +125,7 @@ namespace PokerMuck
                 table.AllowableMatchTemplateThreshold());
             if (playerCards != null)
             {
-                Globals.Director.WriteDebug("Matched player cards! " + playerCards.ToString());
+                //Globals.Director.WriteDebug("Matched player cards! " + playerCards.ToString());
                 handler.PlayerHandRecognized(playerCards);
             }
             else
@@ -166,7 +166,7 @@ namespace PokerMuck
                     );
                 if (communityCards != null && communityCards.Count > 0)
                 {
-                    Globals.Director.WriteDebug("~~~ Matched board cards! " + communityCards.ToString());
+                    //Globals.Director.WriteDebug("~~~ Matched board cards! " + communityCards.ToString());
                     handler.BoardRecognized(communityCards);
                 }
                 else
