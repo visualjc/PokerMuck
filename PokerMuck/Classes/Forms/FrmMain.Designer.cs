@@ -440,6 +440,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.picturePokerMuckIcon)).EndInit();
             this.ResumeLayout(false);
 
+            this.Show();
         }
 
         #endregion

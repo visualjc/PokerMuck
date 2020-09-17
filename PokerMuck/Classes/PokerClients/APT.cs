@@ -8,8 +8,10 @@ using System.Diagnostics;
 
 namespace PokerMuck
 {
+    //TODO: extend to have base Web Poker Client
     class AdvancedPokerTrainer : PokerClient
     {
+        private String domainValue = "advancedpokertraining";
         public AdvancedPokerTrainer()
         {
         }
@@ -38,15 +40,28 @@ namespace PokerMuck
         {
             if (CurrentLanguage == "English")
             {
-                /* To recognize the Game ID given the table window (including any prefixes such as T for tournament)
-                * ex. T1234567990 from €2.60+€0.40 EUR Hold'em No Limit [Heads-up Turbo] - Tournament 1234567990 - 1 on 1 - ...
-                  ex. California X - €0.01/€0.02 EUR - No Limit Hold'em [AAMS ID: M2BCE3000C59C5PF] */
-                regex.Add("game_window_title_to_recognize_tournament_game_id", @"]? - (?<tournamentId>[^ ]+ [0-9]+) [^$]+$");
-                regex.Add("game_window_title_to_recognize_play_money_game_description", @"(?<gameDescription>[^-]+)-[^-]+ Play Money");
-                //regex.Add("game_window_title_to_recognize_cash_game_description", @"(?<gameDescription>.+) - .[\d\.]+\/.[\d\.]+ [\w]{3} - ");
-                //https://www.advancedpokertraining.com/poker/game_popup.php?session_replay_id=3047262&replay_game_level=16&advisor_id=-1&html5=1&retry=1 - Personal - Microsoft? Edge
-                regex.Add("game_window_title_to_recognize_cash_game_description", @"[\?&](?<name>[^&=]+)=(?<value>[^&=]+)");
+                //TODO: refactor this out of "random" strings and to Vars that
+                // can be used with Intellisense...
+                
+                // Get the domain if needed
+                regex.Add("game_window_recognize_domain", @"^(https:\/\/)(?:www\.)(?<domain>.*)\.(?:com|au\.uk|co\.in)");
 
+                
+                /* These types are live games that do ***not*** have Hand History */
+                regex.Add("game_window_title_to_recognize_9_max", @"^(.*)\/poker\/(?<type>game?\.)");
+                regex.Add("game_window_title_to_recognize_6_max", @"^(.*)\/poker\/(?<type>sixmax?\.)");
+                regex.Add("game_window_title_to_recognize_heads_up", @"^(.*)\/poker\/(?<type>headsup?\.)");
+                regex.Add("game_window_title_to_recognize_sng", @"^(.*)\/poker\/(?<type>sng?\.)");                
+                regex.Add("game_window_title_to_recognize_tournament", @"^(.*)\/poker\/(?<type>mtt_full?\.)");
+                regex.Add("game_window_title_to_recognize_final_table", @"^(.*)\/poker\/(?<type>mtt_ft?\.)");
+                //regex.Add("game_window_title_to_recognize_cash_game_description", );
+
+                /* Session Replay games will have a hand history */
+                // this is for a session replay
+                regex.Add("game_window_recognize_session_replay_id",
+                    @"^(https:\/\/)(?:www\.)(?<domain>.*)\.(?:com|au\.uk|co\.in)(.*?\?)(?<name>[^&=]+)=(?<value>[^&=]+)");
+                
+                /* APT uses PokerStars format */
                 /* Recognize the Hand History game phases */
                 regex.Add("hand_history_begin_preflop_phase_token", @"\*\*\* HOLE CARDS \*\*\*");
                 regex.Add("hand_history_begin_flop_phase_token", @"\*\*\* FLOP \*\*\* \[(?<flopCards>[\d\w ]+)\]");
@@ -179,54 +194,57 @@ namespace PokerMuck
             if (windowTitle == "test4.txt - Notepad") return "test4.txt";
             if (windowTitle == "test5.txt - Notepad") return "test5.txt";
 
-            //https://www.advancedpokertraining.com/poker/game_popup.php?session_replay_id=3047262&replay_game_level=16&advisor_id=-1&html5=1&retry=1 - Personal - Microsoft? Edge
-            /* Tricky, title format is significantly different for tournaments and play money on PokerStars.it
-             * so we need to make two checks */
-            //TODO: need to get this to work some day
-            Regex regex = GetRegex("game_window_title_to_recognize_tournament_game_id");
-            Match match = regex.Match(windowTitle);
-            if (match.Success)
+            
+            /* 1. Are we on the correct window/domain? */
+            Match aptDomainMatch = GetRegex("game_window_recognize_domain").Match(windowTitle);
+            if (!aptDomainMatch.Success)
             {
-                // We matched a tournament game window
-                // tournamentID = Tournament 123456789, we need T12345689
-                String tournamentID = match.Groups["tournamentId"].Value;
-                String[] parts = tournamentID.Split(' ');
-
-                String prefix = parts[0].Substring(0, 1); //T
-                String gameID = parts[1];
-
-                return String.Format(GetConfigString("hand_history_tournament_filename_format"), prefix, gameID);
+                Globals.Director.WriteDebug("--- ERROR: NOT a Chromium Window pointing to a URL");
+                return String.Empty;
             }
             else
             {
-                // No luck, try with play money
-                regex = GetRegex("game_window_title_to_recognize_play_money_game_description");
-                match = regex.Match(windowTitle);
-                if (match.Success)
+                string domain = aptDomainMatch.Groups["domain"].Value;
+                Globals.Director.WriteDebug("--- Chromium Window pointing to a URL; domain: " + domainValue);
+                if(!this.domainValue.Contains(domain))
                 {
-                    string gameDescription = match.Groups["gameDescription"].Value;
-
-                    // We matched a play money game window, need to convert the description into a filename friendly format
-                    return String.Format(GetConfigString("hand_history_play_and_real_money_filename_format"), gameDescription);
+                    Globals.Director.WriteDebug("--- ERROR: Domain not correct");
+                    return String.Empty;
                 }
-                else
-                {
-                    // okay - lets look at this
-                    // No luck again, try with cash games
-                    regex = GetRegex("game_window_title_to_recognize_cash_game_description");
-                    match = regex.Match(windowTitle);
-                    if (match.Success)
-                    {
-                        string gameDescription = match.Groups["value"].Value;
-
-                        // We matched a real money game window, need to convert the description into a filename friendly format
-                        return String.Format(GetConfigString("hand_history_play_and_real_money_filename_format"), gameDescription);
-                    }
-                    else
-                    {
-                        return String.Empty; //Could not find any valid match... must be a title we're not interested into
-                    }
-                }
+            } 
+            
+            /* okay APT has several different "types of games" we need to recognize:
+            Live "games" (no hand history):
+            1. MTT window - "game_window_title_to_recognize_tournament";
+            2. 9x Cash Game window - "game_window_title_to_recognize_9_max"
+            3. 6x Cash Game window - "game_window_title_to_recognize_6_max"
+            4. Final Table window -  "game_window_title_to_recognize_final_table"
+            5. Heads up window - "game_window_title_to_recognize_heads_up"
+            6. Sit'n go table - "game_window_title_to_recognize_sng"
+            
+            Session Replay games, will have a hand history **
+            1. game_window_recognize_session_replay_id
+            Previous sessions:
+            session_id=<session>
+            https://www.advancedpokertraining.com/poker/game_popup.php?session_replay_id=3047262&replay_game_level=16&advisor_id=-1&html5=1&retry=1
+            */ 
+            /* 2. session, it is the only one with a Hand History (ATM) */
+            Regex regex = GetRegex("game_window_recognize_session_replay_id");
+            Match match = regex.Match(windowTitle);
+            Globals.Director.WriteDebug("-- looking for a session replay id");
+            if (match.Success)
+            {
+                // We matched a session id
+                string sessionId = match.Groups["value"].Value;
+                Globals.Director.WriteDebug("-- found one, session id: " + sessionId);
+                
+                // We matched a real money game window, need to convert the description into a filename friendly format
+                return String.Format(GetConfigString("hand_history_play_and_real_money_filename_format"), sessionId);
+            }
+            else
+            {
+                Globals.Director.WriteDebug("-- DID NOT FIND A SESSION, maybe live game?");
+                return String.Empty; //Could not find any valid match...
             }
         }
 
@@ -242,7 +260,58 @@ namespace PokerMuck
 
         public override PokerGameType GetPokerGameTypeFromWindowTitle(string windowTitle)
         {
-            return PokerGameType.Unknown; // It doesn't make a difference to know the game type
+            /*
+             * 1. MTT window - "game_window_title_to_recognize_tournament";
+            2. 9x Cash Game window - "game_window_title_to_recognize_9_max"
+            3. 6x Cash Game window - "game_window_title_to_recognize_6_max"
+            4. Final Table window -  "game_window_title_to_recognize_final_table"
+            5. Heads up window - "game_window_title_to_recognize_heads_up"
+            6. Sit'n go table - "game_window_title_to_recognize_sng"
+             */
+            Globals.Director.WriteDebug("-- Checking for type of game");
+            Regex regex = GetRegex("game_window_title_to_recognize_tournament");
+            if (regex.Match(windowTitle).Success)
+            {
+                Globals.Director.WriteDebug("-- found MTT");
+                return PokerGameType.Tournament;
+            }
+
+            regex = GetRegex("game_window_title_to_recognize_9_max");
+            if (regex.Match(windowTitle).Success)
+            {
+                Globals.Director.WriteDebug("-- found 9 Max");
+                return PokerGameType.Ring9Max;
+            }
+            
+            regex = GetRegex("game_window_title_to_recognize_6_max");
+            if (regex.Match(windowTitle).Success)
+            {
+                Globals.Director.WriteDebug("-- found 6 Max");
+                return PokerGameType.Ring6Max;
+            }
+            
+            regex = GetRegex("game_window_title_to_recognize_final_table");
+            if (regex.Match(windowTitle).Success)
+            {
+                Globals.Director.WriteDebug("-- found final table");
+                return PokerGameType.FinalTable;
+            }
+            
+            regex = GetRegex("game_window_title_to_recognize_heads_up");
+            if (regex.Match(windowTitle).Success)
+            {
+                Globals.Director.WriteDebug("-- found headsup");
+                return PokerGameType.HeadsUp;
+            }
+            
+            regex = GetRegex("game_window_title_to_recognize_sng");
+            if (regex.Match(windowTitle).Success)
+            {
+                Globals.Director.WriteDebug("-- found SNG");
+                return PokerGameType.SNG;
+            }
+            
+            return PokerGameType.Unknown;
         }
 
         public override String Name

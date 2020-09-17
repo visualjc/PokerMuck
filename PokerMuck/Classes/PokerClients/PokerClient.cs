@@ -18,7 +18,7 @@ namespace PokerMuck
 
     public enum PokerGameType
     {
-        Tournament, Ring, Unknown
+        Tournament, Ring, Ring10Max, Ring9Max, Ring6Max, SNG, HeadsUp, FinalTable, Unknown
     }
 
     public abstract class PokerClient
@@ -202,6 +202,7 @@ namespace PokerMuck
         protected PokerClient()
         {
             regex = new Hashtable();
+            compiledRegex = new Hashtable();
             config = new Hashtable();
             currentTheme = "";
 
@@ -252,10 +253,10 @@ namespace PokerMuck
 
         public Regex GetRegex(String key){
             Trace.Assert(regex.ContainsKey(key),String.Format("--- The derived PokerClient class does not include the regex key: " + key));
-            
+
             //check for compiled regex first,
             //this keeps us from creating the same regex over and over.
-            Regex existingRegex = (Regex) compiledRegex[key];
+            Regex existingRegex = (Regex) compiledRegex[key]; //compiledRegex.ContainsKey(key) ? (Regex) compiledRegex[key] : null;
 
             if (null != existingRegex)
                 return existingRegex;

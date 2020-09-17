@@ -9,6 +9,7 @@ using System.Collections.Concurrent;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Windows.Forms;
+using System.Configuration;
 
 namespace PokerMuck
 {
@@ -68,9 +69,18 @@ namespace PokerMuck
 
             // Initialize the user configuration 
             Globals.UserSettings = new PokerMuckUserSettings();
-
-            // First execution?
             
+            string path = System.Configuration.ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoamingAndLocal).FilePath;
+            Trace.WriteLine("PerUserRoamingAndLocal: " + path);
+            
+            path = System.Configuration.ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None).FilePath;
+            Trace.WriteLine("None: " + path);
+            
+            path = System.Configuration.ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoaming).FilePath;
+            Trace.WriteLine("PerUserRoaming: " + path);
+            
+            
+            // First execution?
             if (Globals.UserSettings.FirstExecution)
             {
                 ShowFirstExecutionWizard();
