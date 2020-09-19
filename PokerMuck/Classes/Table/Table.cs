@@ -641,6 +641,11 @@ namespace PokerMuck
             return result;
         }
 
+        public void VisuallyProcessImage(Bitmap screenShot)
+        {
+            visualRecognitionManager.VisuallyProcessTableImage(screenShot);
+        }
+
         /* We are done with this table */
         public void Terminate()
         {

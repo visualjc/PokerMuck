@@ -9,7 +9,7 @@ using System.Collections;
 
 namespace PokerMuck
 {
-    class VisualRecognitionManager
+    public class VisualRecognitionManager
     {
         /* How often do we pick a new screenshot and elaborate the images? */
         const int REFRESH_TIME = 2000;
@@ -37,7 +37,7 @@ namespace PokerMuck
 
             this.timedScreenshotTaker = new TimedScreenshotTaker(REFRESH_TIME, tableWindow);
             this.timedScreenshotTaker.ScreenshotTaken += new TimedScreenshotTaker.ScreenshotTakenHandler(timedScreenshotTaker_ScreenshotTaken);
-            this.timedScreenshotTaker.Start();
+            
         }
 
         /* Update spawn location for the card select dialog (could have changed) */
@@ -47,7 +47,118 @@ namespace PokerMuck
             matcher.SetCardMatchDialogSpawnLocation(winRect.X + 30, winRect.Y + 30);
         }
 
+        public void StartProcessingTimedScreenShots()
+        {
+            this.timedScreenshotTaker.Start();
+        }
+        
+        public void StopProcessingTimedScreenShots()
+        {
+            this.timedScreenshotTaker.Stop();
+        }
+        
         void timedScreenshotTaker_ScreenshotTaken(Bitmap screenshot)
+        {
+            this.VisuallyProcessTableImage(screenshot);
+        }
+
+        private void ProcessCommunityCardActions(Bitmap screenshot)
+        {
+            /* If community cards are supported, try to match them */
+            if (colorMap.SupportsCommunityCards)
+            {
+                List<Bitmap> communityCardImages = new List<Bitmap>();
+                ArrayList communityCardsActions = colorMap.GetCommunityCardsActions();
+
+                foreach (String action in communityCardsActions)
+                {
+                    Rectangle actionRect = recognitionMap.GetRectangleFor(action);
+                    if (!actionRect.Equals(Rectangle.Empty))
+                    {
+                        communityCardImages.Add(ScreenshotTaker.Slice(screenshot, actionRect));
+                    }
+                    else
+                    {
+                        Globals.Director.WriteDebug("Warning: could not find a rectangle for action " + action);
+                    }
+                }
+
+                // We try to identify as many cards as possible
+                CardList communityCards = matcher.MatchCards(communityCardImages,
+                    true,
+                    communityCardsActions,
+                    table.MatchHistogramThreshold(),
+                    table.MatchTemplateThreshold(),
+                    table.AllowableMatchTemplateThreshold()
+                );
+                if (communityCards != null && communityCards.Count > 0)
+                {
+                    //Globals.Director.WriteDebug("~~~ Matched board cards! " + communityCards.ToString());
+                    handler.BoardRecognized(communityCards);
+                }
+                else
+                {
+                    Globals.Director.WriteDebug("~~~ Warning: could not find a commnity cards ");
+                }
+
+                // Dispose
+                foreach (Bitmap image in communityCardImages)
+                    if (image != null)
+                        image.Dispose();
+            }
+        }
+
+        private void ProcessPlayerCardActions(Bitmap screenshot, int seat, bool isHero)
+        {
+            /* Try to match player cards */
+            List<Bitmap> playerCardImages = new List<Bitmap>();
+            ArrayList playerCardsActions = colorMap.GetPlayerCardsActions(seat);
+
+            foreach (String action in playerCardsActions)
+            {
+                Globals.Director.WriteDebug(" --- PlayerCardsActions: " + action);
+                Rectangle actionRect = recognitionMap.GetRectangleFor(action);
+                if (!actionRect.Equals(Rectangle.Empty))
+                {
+                    //Globals.Director.WriteDebug(" --- Found Rectangle for:: " + action);
+                    playerCardImages.Add(ScreenshotTaker.Slice(screenshot, actionRect));
+                }
+                else
+                {
+                    Globals.Director.WriteDebug("Warning: could not find a rectangle for action " + action);
+                }
+            }
+
+            //Globals.Director.WriteDebug("Matching player cards! ");
+
+            //playerCardsActions
+            CardList playerCards = matcher.MatchCards(playerCardImages,
+                false,
+                playerCardsActions,
+                table.MatchHistogramThreshold(),
+                table.MatchTemplateThreshold(),
+                table.AllowableMatchTemplateThreshold());
+            if (playerCards != null && isHero)
+            {
+                Globals.Director.WriteDebug("Matched player cards! " + playerCards.ToString());
+                handler.PlayerHandRecognized(playerCards);
+            }
+            else if (playerCards != null && !isHero)
+            {
+                Globals.Director.WriteDebug(" -- NOT hero cards. Seat " + seat + " Cards: " + playerCards.ToString());
+            }
+            else
+            {
+                Globals.Director.WriteDebug(" --- SEAT: " + seat + " Did not find any matching player cards ");
+            }
+
+            // Dispose
+            foreach (Bitmap image in playerCardImages)
+                if (image != null)
+                    image.Dispose();
+        }
+
+        public bool VisuallyProcessTableImage(Bitmap screenshot)
         {
             UpdateCardMatchDialogSpawnLocation();
 
@@ -72,7 +183,7 @@ namespace PokerMuck
                 tableWindow.Resize(newSize, true);
                 // Globals.Director.WriteDebug(" --- CurrentHeroSeat: " + table.CurrentHeroSeat);
                 // Globals.Director.WriteDebug(" --- resizing window try again later");
-                return; // At next iteration this code should not be executed because sizes will be the same, unless the player resizes the window
+                return false; // At next iteration this code should not be executed because sizes will be the same, unless the player resizes the window
             }
 
             if (this.processingScreenShot)
@@ -81,7 +192,7 @@ namespace PokerMuck
                 // Dispose screenshot
                 if (screenshot != null) 
                     screenshot.Dispose();
-                return;
+                return false;
             }
             else
             {
@@ -92,20 +203,39 @@ namespace PokerMuck
             // If we don't know where the player is seated, we don't need to process any further
             if (table.CurrentHeroSeat == 0)
             {
-                //Globals.Director.WriteDebug(" --- could not find CurrentHeroSeat???");
-                return;
+                Globals.Director.WriteDebug(" ERROR: --- could not find CurrentHeroSeat???");
+                return false;
+            }
+            
+            foreach (Player player in table.PlayerList)
+            {
+                int seat = player.SeatNumber;
+                ProcessPlayerCardActions(screenshot, seat, seat == heroSeat);
             }
 
+            ProcessCommunityCardActions(screenshot);
+             
+            // Dispose screenshot
+            if (screenshot != null) screenshot.Dispose();
+
+            processingScreenShot = false;
+
+            return true;
+        }
+
+        // DO NOT NEED TO USE, here for completeness
+        public void ProcessHeroHands(Bitmap screenshot, int heroSeat)
+        {
             /* Try to match player cards */
             List<Bitmap> playerCardImages = new List<Bitmap>();
             ArrayList playerCardsActions = colorMap.GetPlayerCardsActions(heroSeat);
-
+            
             foreach(String action in playerCardsActions){
-                //Globals.Director.WriteDebug(" --- PlayerCardsActions: " + action);
+                Globals.Director.WriteDebug(" --- PlayerCardsActions: " + action);
                 Rectangle actionRect = recognitionMap.GetRectangleFor(action);
                 if (!actionRect.Equals(Rectangle.Empty))
                 {
-                    //Globals.Director.WriteDebug(" --- Found Rectangle for:: " + action);
+                    Globals.Director.WriteDebug(" --- Found Rectangle for:: " + action);
                     playerCardImages.Add(ScreenshotTaker.Slice(screenshot, actionRect));
                 }
                 else
@@ -113,8 +243,8 @@ namespace PokerMuck
                     Globals.Director.WriteDebug("Warning: could not find a rectangle for action " + action);
                 }
             }
-
-            //Globals.Director.WriteDebug("Matching player cards! ");
+            
+            Globals.Director.WriteDebug("Matching player cards! ");
             
             //playerCardsActions
             CardList playerCards = matcher.MatchCards(playerCardImages,
@@ -125,7 +255,7 @@ namespace PokerMuck
                 table.AllowableMatchTemplateThreshold());
             if (playerCards != null)
             {
-                //Globals.Director.WriteDebug("Matched player cards! " + playerCards.ToString());
+                Globals.Director.WriteDebug("Matched player cards! " + playerCards.ToString());
                 handler.PlayerHandRecognized(playerCards);
             }
             else
@@ -137,54 +267,8 @@ namespace PokerMuck
             foreach (Bitmap image in playerCardImages) 
                 if (image != null) image.Dispose();
 
-            /* If community cards are supported, try to match them */
-            if (colorMap.SupportsCommunityCards)
-            {
-                List<Bitmap> communityCardImages = new List<Bitmap>();
-                ArrayList communityCardsActions = colorMap.GetCommunityCardsActions();
-            
-                foreach (String action in communityCardsActions)
-                {
-                    Rectangle actionRect = recognitionMap.GetRectangleFor(action);
-                    if (!actionRect.Equals(Rectangle.Empty))
-                    {
-                        communityCardImages.Add(ScreenshotTaker.Slice(screenshot, actionRect));
-                    }
-                    else
-                    {
-                        Globals.Director.WriteDebug("Warning: could not find a rectangle for action " + action);
-                    }
-                }
-            
-                // We try to identify as many cards as possible
-                CardList communityCards = matcher.MatchCards(communityCardImages,
-                    true, 
-                    communityCardsActions,
-                    table.MatchHistogramThreshold(),
-                    table.MatchTemplateThreshold(),
-                    table.AllowableMatchTemplateThreshold()
-                    );
-                if (communityCards != null && communityCards.Count > 0)
-                {
-                    //Globals.Director.WriteDebug("~~~ Matched board cards! " + communityCards.ToString());
-                    handler.BoardRecognized(communityCards);
-                }
-                else
-                {
-                    Globals.Director.WriteDebug("~~~ Warning: could not find a commnity cards ");
-                }
-            
-                // Dispose
-                foreach (Bitmap image in communityCardImages) if (image != null) 
-                    image.Dispose();
-            }
-
-            // Dispose screenshot
-            if (screenshot != null) screenshot.Dispose();
-
-            processingScreenShot = false;
         }
-
+        
         public void Cleanup(){
             if (timedScreenshotTaker != null) timedScreenshotTaker.Stop();
         }

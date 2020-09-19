@@ -5,7 +5,7 @@ using System.Text;
 
 namespace PokerMuck
 {
-    interface IVisualRecognitionManagerHandler
+    public interface IVisualRecognitionManagerHandler
     {
         void PlayerHandRecognized(CardList playerCards);
         void BoardRecognized(CardList board);

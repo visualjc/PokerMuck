@@ -387,6 +387,18 @@ namespace PokerMuck
 
             return result;
         }
+        
+        private Table FindTableByWindowHandle(IntPtr windowHandle)
+        {
+            Table result = tables.Find(
+                delegate(Table t)
+                {
+                    return t.WindowHandle == windowHandle;
+                }
+            );
+
+            return result;
+        }
 
         /* Initializes all of the supported poker clients 
            If you add a new client in the future, remember to add it
@@ -422,6 +434,20 @@ namespace PokerMuck
                 {
                     return false;
                 }
+                
+                WriteDebug("--- Try to analize the screen shoot");
+
+               // Table foundWindow = FindTableByWindowTitle(w.Title);
+
+                Table foundWindow = FindTableByWindowHandle(w.handle);
+                if (null != foundWindow && foundWindow.IsVisualRecognitionPossible())
+                {
+                    foundWindow.VisuallyProcessImage(screenshot);
+                }
+                else
+                {
+                    Globals.Director.WriteDebug(" ERROR: could not find table for window: " + w.Title);
+                }
 
                 return true;
             }
@@ -429,11 +455,24 @@ namespace PokerMuck
             return false;
         }
 
+        public void WriteDebug(bool shouldWrite, string debugMsg, string className = "",
+            [CallerMemberName] string memberName = null,
+            [CallerFilePath] string filePath = null,
+            [CallerLineNumber] int lineNumber = 0)
+        {
+            if (!shouldWrite)
+                return;
+            
+            WriteDebug(debugMsg, className, memberName, filePath, lineNumber);
+        }
+
         public void WriteDebug(string debugMsg, string className = "",
             [CallerMemberName] string memberName = null,
             [CallerFilePath] string filePath = null,
             [CallerLineNumber] int lineNumber = 0)
         {
+            
+            
             DateTime now = DateTime.Now;
             debugStrBld.Clear();
             debugStrBld.Append(now.ToShortTimeString());
@@ -455,7 +494,7 @@ namespace PokerMuck
                 while (debugQue.TryDequeue(out message))
                 {
                     Trace.WriteLine(message);
-                    Thread.Sleep(100);
+                    Thread.Sleep(10);
                 }
 
                 Thread.Sleep((100));
