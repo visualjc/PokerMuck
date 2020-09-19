@@ -18,11 +18,13 @@ namespace PokerMuck
     {
         /* Contains the associaction action => color, MUST be initialized by initializeMapData */
         protected Hashtable mapData;
+        protected List<string> sortedList;
         protected abstract void InitializeMapData();
 
         public ColorMap()
         {
             mapData = new Hashtable();
+            sortedList = new List<string>();
             InitializeMapData();
         }
 
@@ -34,6 +36,23 @@ namespace PokerMuck
             return (Color)mapData[action];
         }
 
+        public List<String> SortedActions()
+        {
+            ICollection keys = this.mapData.Keys;
+            if (keys.Count > 0 && keys.Count == sortedList.Count)
+                return sortedList;
+            
+            sortedList.Clear();
+            foreach (var actionName in this.mapData.Keys)
+            {
+                sortedList.Add(actionName.ToString());
+            }
+
+            sortedList.Sort();
+            return sortedList;
+        }
+
+        
         /* Every game must have player cards in the map, but certain game modes might
          * deal more cards than others (holdem: 2, omaha: 4). This method returns a list
          * of actions that represent the cards of the player at a particular seat */
@@ -53,7 +72,7 @@ namespace PokerMuck
         public ICollection Actions{
             get { return mapData.Keys; }
         }
-
+        
         public static ColorMap Create(PokerGame game)
         {
             switch (game)

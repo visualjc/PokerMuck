@@ -84,7 +84,9 @@ namespace PokerMuck
             ColorFiltering filter = new ColorFiltering();
             Trace.WriteLine("Analysing color map " + mapLocation + "...");
 
-            foreach (String action in colorMap.Actions)
+            var sortedList = colorMap.SortedActions();
+            
+            foreach (String action in sortedList)
             {
                 Color actionColor = colorMap.GetColorFor(action);
                 
