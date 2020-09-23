@@ -146,6 +146,7 @@ namespace PokerMuck
             else if (playerCards != null && !isHero)
             {
                 Globals.Director.WriteDebug(" -- NOT hero cards. Seat " + seat + " Cards: " + playerCards.ToString());
+                handler.VillainHandRecognized(playerCards, seat);
             }
             else
             {

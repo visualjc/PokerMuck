@@ -147,7 +147,6 @@ namespace PokerMuck
             Thread.Sleep(500);
             IAsyncResult asyncResult = (IAsyncResult) result;
             asyncResult.AsyncWaitHandle.WaitOne();
-            Trace.WriteLine("\n\t ~~~~ WaitONe finished");
             Director_InvalidateAfterUI(asyncResult);
         }
         void Director_InvalidateAfterUI(IAsyncResult result)

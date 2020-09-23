@@ -9,5 +9,7 @@ namespace PokerMuck
     {
         void PlayerHandRecognized(CardList playerCards);
         void BoardRecognized(CardList board);
+
+        void VillainHandRecognized(CardList villainCards, int seat);
     }
 }
