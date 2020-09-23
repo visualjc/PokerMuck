@@ -23,6 +23,8 @@ namespace PokerMuck
 
     class PokerMuckDirector : IDetectWindowsChanges, INewFilesMonitorHandler
     {
+        private const bool WRITE_DEBUG = true;
+        
         private WindowsListener windowsListener;
         private PokerClient pokerClient;
 
@@ -71,13 +73,13 @@ namespace PokerMuck
             Globals.UserSettings = new PokerMuckUserSettings();
             
             string path = System.Configuration.ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoamingAndLocal).FilePath;
-            Trace.WriteLine("PerUserRoamingAndLocal: " + path);
+            WriteDebug(WRITE_DEBUG,"PerUserRoamingAndLocal: " + path);
             
             path = System.Configuration.ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None).FilePath;
-            Trace.WriteLine("None: " + path);
+            WriteDebug(WRITE_DEBUG,"None: " + path);
             
             path = System.Configuration.ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoaming).FilePath;
-            Trace.WriteLine("PerUserRoaming: " + path);
+            WriteDebug(WRITE_DEBUG,"PerUserRoaming: " + path);
             
             
             // First execution?
@@ -149,7 +151,7 @@ namespace PokerMuck
         /* A window has been minimized... hide the hud associated with it */
         public void WindowMinimized(string windowTitle)
         {
-            Trace.WriteLine("Minimized: " + windowTitle);
+            WriteDebug(WRITE_DEBUG,"Minimized: " + windowTitle);
             Table t = FindTableByWindowTitle(windowTitle);
             if (t != null){
                 SetHudVisible(t, false);
@@ -160,7 +162,7 @@ namespace PokerMuck
         /* A window has been maximized... show the hud */
         public void WindowMaximized(string windowTitle)
         {
-            Trace.WriteLine("Maximized: " + windowTitle);
+            WriteDebug(WRITE_DEBUG,"Maximized: " + windowTitle);
             Table t = FindTableByWindowTitle(windowTitle);
             if (t != null)
             {
@@ -184,7 +186,7 @@ namespace PokerMuck
             newFilesMonitor = new NewFilesMonitor(Globals.UserSettings.HandHistoryDirectory, this);
             newFilesMonitor.StartMonitoring();
 
-            Trace.WriteLine("Changing hand history directory: " + Globals.UserSettings.HandHistoryDirectory);
+            WriteDebug(WRITE_DEBUG,"Changing hand history directory: " + Globals.UserSettings.HandHistoryDirectory);
         }
 
         /* Change the poker client */
@@ -242,7 +244,7 @@ namespace PokerMuck
         /* Windows Listener event handler, detects when a window closes */
         public void WindowClosed(string windowTitle)
         {
-            Trace.WriteLine("Window closed: " + windowTitle);
+            WriteDebug(WRITE_DEBUG,"Window closed: " + windowTitle);
 
             Table t = FindTableByWindowTitle(windowTitle);
 
@@ -281,13 +283,14 @@ namespace PokerMuck
             if (windowTitle == "HudWindow" || windowTitle == "TableDisplayWindow") return;
 
             // Make sure the hand history directory is set (otherwise we cannot create a table)
+            //TODO: Part of making a manual training game will be to make this optional
             if (!System.IO.Directory.Exists(Globals.UserSettings.StoredHandHistoryDirectory))
             {
-                Trace.WriteLine("A valid game is available on window " + windowTitle + ", but the hand history path is invalid. Fix the hand history path in your settings");
+                WriteDebug(WRITE_DEBUG,"A valid game is available on window " + windowTitle + ", but the hand history path is invalid. Fix the hand history path in your settings");
                 return;
             }
 
-            Trace.WriteLine(String.Format("Window title: {0}", windowTitle));
+            WriteDebug(WRITE_DEBUG,String.Format("Window title: {0}", windowTitle));
 
             String pattern = pokerClient.GetHandHistoryFilenameRegexPatternFromWindowTitle(windowTitle);
             if (pattern != String.Empty)
@@ -316,15 +319,15 @@ namespace PokerMuck
                         if (table == null)
                         {
                             // First time we see it, we need to create a table for this request
-                            Trace.WriteLine("--- we have a window, do we have a windowHandle? " + windowHandle.ToString());
+                            WriteDebug(WRITE_DEBUG,"--- we have a window, do we have a windowHandle? " + windowHandle.ToString());
                             Window window = null;
                             if (IntPtr.Zero == windowHandle) {
-                                Trace.WriteLine("--- creating Window From Title: " + windowTitle);
+                                WriteDebug(WRITE_DEBUG,"--- creating Window From Title: " + windowTitle);
                                 window = new Window(windowTitle);
                             }
                             else
                             {
-                                Trace.WriteLine("--- creating Window From Handle: " + windowHandle.ToString());
+                                WriteDebug(WRITE_DEBUG,"--- creating Window From Handle: " + windowHandle.ToString());
                                 window = new Window(windowHandle);
                                 window.latestValidWindowTitle = windowTitle;
                             }
@@ -333,7 +336,7 @@ namespace PokerMuck
                             // and add it to our list
                             tables.Add(newTable);
 
-                            Trace.WriteLine("Created new table: " + newTable.WindowTitle + "(" + windowHandle.ToString() + ")"  + " on " + newTable.HandHistoryFilePath);
+                            WriteDebug(WRITE_DEBUG,"Created new table: " + newTable.WindowTitle + "(" + windowHandle.ToString() + ")"  + " on " + newTable.HandHistoryFilePath);
 
                             OnDisplayStatus("Parsing for the first time... please wait.");
 
@@ -347,12 +350,12 @@ namespace PokerMuck
                         }
 
                         OnDisplayStatus("Focus is on the table associated with " + filename);
-                        Trace.WriteLine(String.Format("Valid window title match with {0}", filename));
+                        WriteDebug(WRITE_DEBUG,String.Format("Valid window title match with {0}", filename));
                     }
                     else
                     {
                         OnDisplayStatus("New game started on window: " + windowTitle);
-                        Trace.WriteLine(String.Format("A valid window title was found ({0}) but no filename associated with the window could be found using pattern {1}. Is this our first hand at the table and no hand history is available?", windowTitle, pattern));
+                        WriteDebug(WRITE_DEBUG,String.Format("A valid window title was found ({0}) but no filename associated with the window could be found using pattern {1}. Is this our first hand at the table and no hand history is available?", windowTitle, pattern));
                     }
                 }
             }

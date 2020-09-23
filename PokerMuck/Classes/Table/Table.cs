@@ -12,6 +12,7 @@ namespace PokerMuck
 {
     public class Table : IHHMonitorHandler, IVisualRecognitionManagerHandler
     {
+        private const bool WRITE_DEBUG = true;
         /* Hand history monitor */
         private HHMonitor hhMonitor;
 
@@ -249,7 +250,7 @@ namespace PokerMuck
             }
             else
             {
-                Trace.WriteLine("Cannot update UI until a valid parser is found.");
+                Globals.Director.WriteDebug(WRITE_DEBUG,"Cannot update UI until a valid parser is found.");
             }
         }
 
@@ -286,7 +287,7 @@ namespace PokerMuck
          * about this table */
         private void UpdateUI()
         {
-            Trace.WriteLine("Refresh UI for " + GameID);
+            Globals.Director.OnDisplayStatus("Refresh UI for " + GameID);
 
             Globals.Director.OnDisplayStatus("Displaying Table #" + TableId);
 
@@ -350,7 +351,7 @@ namespace PokerMuck
 
         void handHistoryParser_PlayerIsSeated(string playerName, int seatNumber)
         {
-            Globals.Director.WriteDebug(String.Format("Player added: {0}", playerName));
+            Globals.Director.WriteDebug(WRITE_DEBUG, String.Format("Player added: {0}", playerName));
 
             // Is this player already in the table's player's list?
             Player result = FindPlayer(playerName);
@@ -372,7 +373,7 @@ namespace PokerMuck
 
         void handHistoryParser_RoundHasTerminated()
         {
-            Trace.WriteLine("Round has terminated");
+            Globals.Director.WriteDebug(WRITE_DEBUG,"Round has terminated");
 
             /* 1. Perform last statistics calculations
              * 2. Clear the statistics information relative to a single round
@@ -403,7 +404,7 @@ namespace PokerMuck
 
         private void handHistoryParser_GameDiscovered(string game)
         {
-            Globals.Director.WriteDebug(String.Format("Game discovered! {0}",game));
+            Globals.Director.WriteDebug(WRITE_DEBUG,String.Format("Game discovered! {0}",game));
 
             // Find to what game this game string corresponds
             Game = pokerClient.GetPokerGameFromGameDescription(game);
@@ -413,13 +414,13 @@ namespace PokerMuck
             // Holdem?
             if (foundParser = (Game == PokerGame.Holdem))
             {
-                Globals.Director.WriteDebug("-- Found parser for hold'm");
+                Globals.Director.WriteDebug(WRITE_DEBUG,"-- Found parser for hold'm");
                 handHistoryParser = new HoldemHHParser(pokerClient, System.IO.Path.GetFileName(handHistoryFilePath));
                 statistics = new HoldemTableStatistics(this);
             }
             else if (Game == PokerGame.Unknown)
             {
-                Globals.Director.WriteDebug("### ERROR:: We weren't able to find a better parser for this Game");
+                Globals.Director.WriteDebug(WRITE_DEBUG,"### ERROR:: We weren't able to find a better parser for this Game");
             }
 
             // If we replaced our parser, we need to register the event handlers
@@ -478,7 +479,7 @@ namespace PokerMuck
             bool foundSeat = false;
             foreach (Player p in PlayerList)
             {
-                Trace.WriteLine(" --- Player: " + p.Name);
+                Globals.Director.WriteDebug(WRITE_DEBUG," --- Player: " + p.Name);
                 if (p.Name == heroName)
                 {
                     currentHeroSeat = p.SeatNumber;
@@ -504,22 +505,22 @@ namespace PokerMuck
                     visualRecognitionManager = new VisualRecognitionManager(this, this);
                 }
 
-                // TODO REMOVE
+                // TODO WHY?
                 
-                CardList cards = new CardList();
-                //cards.AddCard(new Card(CardFace.Six, CardSuit.Spades));
-                //cards.AddCard(new Card(CardFace.Eight, CardSuit.Spades));
-                cards.AddCard(new Card(CardFace.Ace, CardSuit.Clubs));
-                cards.AddCard(new Card(CardFace.Seven, CardSuit.Hearts));
-
-                PlayerHandRecognized(cards);
-
-                CardList board = new CardList();
-                cards.AddCard(new Card(CardFace.Ace, CardSuit.Hearts));
-                cards.AddCard(new Card(CardFace.Seven, CardSuit.Spades));
-                cards.AddCard(new Card(CardFace.Six, CardSuit.Hearts));
-
-                BoardRecognized(board);
+                // CardList cards = new CardList();
+                // //cards.AddCard(new Card(CardFace.Six, CardSuit.Spades));
+                // //cards.AddCard(new Card(CardFace.Eight, CardSuit.Spades));
+                // cards.AddCard(new Card(CardFace.Ace, CardSuit.Clubs));
+                // cards.AddCard(new Card(CardFace.Seven, CardSuit.Hearts));
+                //
+                // PlayerHandRecognized(cards);
+                //
+                // CardList board = new CardList();
+                // cards.AddCard(new Card(CardFace.Ace, CardSuit.Hearts));
+                // cards.AddCard(new Card(CardFace.Seven, CardSuit.Spades));
+                // cards.AddCard(new Card(CardFace.Six, CardSuit.Hearts));
+                //
+                // BoardRecognized(board);
 
                 Globals.Director.RunFromGUIThread((Action)delegate()
                 {
@@ -528,7 +529,7 @@ namespace PokerMuck
             }
             else
             {
-                Trace.WriteLine("Visual recognition is not supported for " + this.ToString());
+                Globals.Director.WriteDebug(WRITE_DEBUG,"Visual recognition is not supported for " + this.ToString());
 
                 Globals.Director.RunFromGUIThread((Action)delegate()
                 {
@@ -542,22 +543,65 @@ namespace PokerMuck
         {
             Globals.Director.RunFromGUIThread((Action)delegate()
             {
-                Trace.WriteLine("\n\t ~~~ PlayerHandRecognized " + playerCards.ToString());
+                Globals.Director.WriteDebug(WRITE_DEBUG,"\n\t ~~~ PlayerHandRecognized " + playerCards.ToString());
                 if (DisplayWindow != null) 
                     DisplayWindow.DisplayPlayerHand(playerCards);
             }, true);
-            
+            //TODO - update the state of the Table
         }
 
         public void BoardRecognized(CardList board)
         {
             Globals.Director.RunFromGUIThread((Action)delegate()
             {
-                Trace.WriteLine("\n\t ~~~ BoardRecognized " + board.ToString());
+                Globals.Director.WriteDebug(WRITE_DEBUG,"\n\t ~~~ BoardRecognized " + board.ToString());
                 if (Game == PokerGame.Holdem && DisplayWindow != null){
                     ((HoldemTableDisplayWindow)DisplayWindow).DisplayBoard(board);
                 }                
             }, true);
+            
+            //TODO - update the state of the Table
+        }
+
+        public void VillainHandRecognized(CardList villainCards, int seat)
+        {
+            //TODO: Actions needed:
+            // 1. Find player by seat
+            // 2. Convert CardList into hands
+            // 3. call code below
+
+            Player player = FindPlayer(seat);
+            if (null == player)
+            {
+                Globals.Director.WriteDebug(WRITE_DEBUG, " -- player at seat (" + seat + ") can not be found");
+                return;
+            }
+
+            Hand muckedCards = new Hand();
+            muckedCards.AddCard(villainCards[0]);
+            muckedCards.AddCard(villainCards[1]);
+
+            if (null != this.finalBoard)
+            {
+                muckedCards.AddCard(this.finalBoard[0]);
+                muckedCards.AddCard(this.finalBoard[0]);
+                muckedCards.AddCard(this.finalBoard[0]);
+                muckedCards.AddCard(this.finalBoard[0]);
+                muckedCards.AddCard(this.finalBoard[0]);
+            }
+
+            player.MuckedHand = muckedCards;
+            
+            
+            Globals.Director.RunFromGUIThread(
+                        (Action)delegate()
+                        {
+                            if (DisplayWindow != null) 
+                                DisplayWindow.DisplayPlayerMuckedHand(player.Name, player.MuckedHand);
+                        }, false
+            );
+              
+             
         }
 
         void handHistoryParser_NewTableHasBeenCreated(string gameId, string tableId)
@@ -565,9 +609,9 @@ namespace PokerMuck
             if (this.TableId != String.Empty && this.TableId != tableId)
             {
 
-                Trace.WriteLine("An existing table has just changed its tableID... starting transition.");
-                Trace.WriteLine("Previous ID: " + this.TableId);
-                Trace.WriteLine("New ID: " + tableId);
+                Globals.Director.WriteDebug(WRITE_DEBUG,"An existing table has just changed its tableID... starting transition.");
+                Globals.Director.WriteDebug(WRITE_DEBUG,"Previous ID: " + this.TableId);
+                Globals.Director.WriteDebug(WRITE_DEBUG,"New ID: " + tableId);
 
                 // Clear the list of players (new ones are coming)
                 foreach (Player p in PlayerList)
@@ -596,7 +640,8 @@ namespace PokerMuck
             // Do we need to create a new one?
             if (!playerDatabase.Contains(playerName, GameID))
             {
-                // Create a new player
+                Globals.Director.WriteDebug(WRITE_DEBUG,"Create a new player: " + playerName);
+                
                 Player p = PlayerFactory.CreatePlayer(playerName, Game); 
                 playerList.Add(p);
 
@@ -609,14 +654,14 @@ namespace PokerMuck
                 Player p = playerDatabase.Retrieve(playerName, GameID);
                 playerList.Add(p);
 
-                Trace.WriteLine("Retrieved " + playerName + " from our database!");
+                Globals.Director.WriteDebug(WRITE_DEBUG,"Retrieved " + playerName + " from our database!");
             }
         }
 
         /* Remove a player from the table */
         private void RemovePlayer(String playerName)
         {
-            Trace.WriteLine("Removing " + playerName);
+            Globals.Director.WriteDebug(WRITE_DEBUG,"Removing " + playerName);
             playerList.RemoveAll(
                 delegate(Player p)
                 {
@@ -636,6 +681,21 @@ namespace PokerMuck
                  {
                      return p.Name == playerName;
                  }
+            );
+
+            return result;
+        }
+        
+        /* Finds a player given its seat number
+         * It could return null */
+        public Player FindPlayer(int seat)
+        {
+            // Has this player already been added?
+            Player result = playerList.Find(
+                delegate(Player p)
+                {
+                    return p.SeatNumber == seat;
+                }
             );
 
             return result;
