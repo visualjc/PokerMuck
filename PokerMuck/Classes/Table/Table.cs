@@ -560,7 +560,14 @@ namespace PokerMuck
                 }                
             }, true);
             
+            Globals.Director.WriteDebug(WRITE_DEBUG,"\n\t ~~~ Board Count " + board.ToString() + " " + board.Count);
+
             //TODO - update the state of the Table
+            if (board.Count == 5)
+            {
+                Board finalBoard = new HoldemBoard(board);
+                handHistoryParser_FinalBoardAvailable(finalBoard);
+            }
         }
 
         public void VillainHandRecognized(CardList villainCards, int seat)
@@ -581,27 +588,13 @@ namespace PokerMuck
             muckedCards.AddCard(villainCards[0]);
             muckedCards.AddCard(villainCards[1]);
 
-            if (null != this.finalBoard)
-            {
-                muckedCards.AddCard(this.finalBoard[0]);
-                muckedCards.AddCard(this.finalBoard[0]);
-                muckedCards.AddCard(this.finalBoard[0]);
-                muckedCards.AddCard(this.finalBoard[0]);
-                muckedCards.AddCard(this.finalBoard[0]);
-            }
+            player.IsPlaying = true;
+            player.IsDealtHoleCards();
+            player.MuckHandAvailable(muckedCards);
+            
+            UpdateUI();
 
-            player.MuckedHand = muckedCards;
-            
-            
-            Globals.Director.RunFromGUIThread(
-                        (Action)delegate()
-                        {
-                            if (DisplayWindow != null) 
-                                DisplayWindow.DisplayPlayerMuckedHand(player.Name, player.MuckedHand);
-                        }, false
-            );
-              
-             
+
         }
 
         void handHistoryParser_NewTableHasBeenCreated(string gameId, string tableId)
